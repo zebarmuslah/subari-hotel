@@ -1,82 +1,134 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Subari Hotel System</title>
-<style>
-  :root{ --green:#22c55e; --yellow:#facc15; --red:#ef4444; --gray:#9ca3af; }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui;background:#fff;color:#222}
-  header{padding:10px 14px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .sp{flex:1}
-  .btn{padding:8px 12px;border-radius:10px;border:0;background:#111;color:#fff;cursor:pointer;font-weight:800}
-  .btn-outline{padding:8px 12px;border-radius:10px;background:#fff;border:1px solid #ddd;color:#111;cursor:pointer}
-  .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid #eee}
-  .bar input{padding:10px;border-radius:10px;border:1px solid #ddd;min-width:260px}
-  .wrap{display:grid;justify-content:center;padding:16px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;max-width:1100px}
-  .card{background:#fff;border:1px solid #eee;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.05);padding:12px;display:flex;flex-direction:column;gap:8px;min-height:150px}
-  .stripe{height:6px;border-radius:6px;margin:-6px -6px 6px}
-  .room{font-weight:900}
-  .foot{font-size:12px;color:#666}
-  dialog{border:1px solid #ddd;border-radius:14px;background:#fff;color:#222;max-width:820px;width:min(820px,96vw)}
-  dialog form{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px 14px}
-  dialog input, dialog select{width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;background:#fff}
-  .full{grid-column:1/-1}
-  .right{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;padding:12px 14px;border-top:1px solid #eee}
-</style>
-</head>
-<body>
-<header><h2>Subari Hotel System</h2><div class="sp"></div><button id="logout" class="btn-outline">Logout</button></header>
-<div class="bar">
-  <input id="q" placeholder="Search room / guest">
-  <button class="btn-outline" data-filter="all">All</button>
-  <button class="btn-outline" data-filter="green">In-House</button>
-  <button class="btn-outline" data-filter="yellow">Reserved</button>
-  <button class="btn-outline" data-filter="red">Dirty</button>
-  <button class="btn-outline" data-filter="gray">Vacant</button>
-  <div class="sp"></div>
-  <button id="addBtn" class="btn">Add room</button>
-</div>
-<div class="wrap"><div class="grid" id="grid"></div></div>
-
-<dialog id="dlg">
-<form id="frm">
-  <div><label>Room</label><input name="roomNumber" required></div>
-  <div><label>Status</label><select name="status">
-    <option value="gray">Vacant</option><option value="yellow">Reserved</option><option value="green">In-House</option><option value="red">Dirty</option>
-  </select></div>
-  <div><label>Guest</label><input name="guest"></div>
-  <div><label>Persons</label><input name="persons" type="number"></div>
-  <div><label>Nights</label><input name="nights" type="number"></div>
-  <div><label>Rate/night</label><input name="rate" type="number"></div>
-  <div><label>Phone</label><input name="phone"></div>
-  <div><label>Car</label><input name="car"></div>
-  <div><label>Payment</label><select name="method"><option>Cash</option><option>Card</option><option>Bank</option></select></div>
-  <div><label>Paid?</label><select name="paid"><option value="unpaid">Unpaid</option><option value="paid">Paid</option></select></div>
-  <div class="full"><label>Notes</label><input name="notes"></div>
-</form>
-<div class="right">
-  <button id="checkin" class="btn-outline">Check-In</button>
-  <button id="checkout" class="btn-outline">Check-Out</button>
-  <button id="saveBtn" class="btn">Save</button>
-</div>
-</dialog>
-
 <script>
-if(!localStorage.getItem('user')) location.href='login.html';
-document.getElementById('logout').onclick=()=>{localStorage.removeItem('user');location.href='login.html';};
-const KEY='subari_v1';let rooms=JSON.parse(localStorage.getItem(KEY)||'[]');
-const grid=document.getElementById('grid');const dlg=document.getElementById('dlg');const frm=document.getElementById('frm');let current=null;
-function save(){localStorage.setItem(KEY,JSON.stringify(rooms));}
-function render(){grid.innerHTML='';rooms.forEach(r=>{const c=document.createElement('div');c.className='card';c.innerHTML=`<div class='stripe' style='background:${r.status=="green"?"#22c55e":r.status=="yellow"?"#facc15":r.status=="red"?"#ef4444":"#9ca3af"}'></div><div class='room'>Room ${r.roomNumber}</div><div>${r.guest||''}</div><div>${r.phone||''}</div><button class='btn-outline'>Open</button>`;c.querySelector('button').onclick=()=>openDlg(r);grid.append(c);});}
-function openDlg(o){current=o||{status:'gray'};for(const e of frm.elements){if(e.name)e.value=current[e.name]||'';}dlg.showModal();}
-document.getElementById('addBtn').onclick=()=>openDlg(null);
-document.getElementById('saveBtn').onclick=()=>{const f=Object.fromEntries(new FormData(frm).entries());if(!current.id){current.id=Date.now();rooms.push(current);}Object.assign(current,f);save();render();dlg.close();};
-document.getElementById('checkin').onclick=()=>{if(current){current.status='green';save();render();dlg.close();}};
-document.getElementById('checkout').onclick=()=>{if(current){current.status='red';current.guest='';current.phone='';save();render();dlg.close();}};
+// ======= ROOM LIST (always show these rooms) =======
+const ROOM_LIST = [
+  // 1st floor 101-106
+  '101','102','103','104','105','106',
+  // 2nd floor 201-206
+  '201','202','203','204','205','206',
+  // 3rd floor 301-306
+  '301','302','303','304','305','306',
+  // 4th floor 401-406
+  '401','402','403','404','405','406',
+  // 5th floor 501-506
+  '501','502','503','504','505','506',
+  // 6th floor 601-614 except 603
+  '601','602','604','605','606','607','608','609','610','611','612','613','614'
+];
+
+// ======= STORAGE =======
+const KEY='subari_v1';                 // keep your old key so data remains
+let rooms = JSON.parse(localStorage.getItem(KEY) || '[]');
+function save(){ localStorage.setItem(KEY, JSON.stringify(rooms)); }
+function money(n){ return Number(n||0).toLocaleString('en-IQ'); }
+function color(s){ return {green:'#22c55e',yellow:'#facc15',red:'#ef4444',gray:'#9ca3af'}[s] || '#ddd'; }
+
+// ======= DOM HOOKS =======
+const grid = document.getElementById('grid');
+const dlg = document.getElementById('dlg');
+const frm = document.getElementById('frm');
+const q = document.getElementById('q');
+let filter='all', current=null;
+
+document.querySelectorAll('[data-filter]').forEach(b=> b.onclick=()=>{ filter=b.dataset.filter; render(); });
+q?.addEventListener('input', render);
+
+// ======= HELPERS =======
+// Ensure we have an object for every room in ROOM_LIST
+function ensureAllRooms(){
+  const map = new Map(rooms.map(r => [String(r.roomNumber), r]));
+  for(const num of ROOM_LIST){
+    if(!map.has(num)){
+      map.set(num, { id: 'seed_'+num, roomNumber: num, status:'gray' }); // vacant/clean
+    }
+  }
+  rooms = Array.from(map.values());
+  // Keep a stable order by room number
+  rooms.sort((a,b)=> String(a.roomNumber).localeCompare(String(b.roomNumber)));
+  save();
+}
+
+// ======= RENDER =======
+function render(){
+  ensureAllRooms(); // guarantee all rooms appear
+  const term=(q?.value||'').toLowerCase();
+  grid.innerHTML='';
+  rooms
+    .filter(r => filter==='all' ? true : r.status===filter)
+    .filter(r => (String(r.roomNumber)+' '+(r.guest||'')+' '+(r.phone||'')+' '+(r.car||'')).toLowerCase().includes(term))
+    .forEach(r=>{
+      const card=document.createElement('div'); card.className='card';
+      const stripe=document.createElement('div'); stripe.className='stripe'; stripe.style.background=color(r.status||'gray');
+      const title=document.createElement('div'); title.className='room'; title.textContent='Room '+(r.roomNumber||'');
+      const row=document.createElement('div'); row.className='row';
+      if(r.guest)   row.innerHTML+=`<span>👤 ${r.guest}</span>`;
+      if(r.persons) row.innerHTML+=`<span>• 👥 ${r.persons}</span>`;
+      if(r.nights)  row.innerHTML+=`<span>• 🛌 ${r.nights}</span>`;
+      if(r.rate)    row.innerHTML+=`<span>• 💵 ${money(r.rate)}</span>`;
+
+      const total=(+r.nights||0)*(+r.rate||0);
+      const balance=Math.max(0,total-(+r.amountPaid||0));
+      const foot=document.createElement('div'); foot.className='foot';
+      const paidText=r.paid==='paid'?'مدفوع':'غير مدفوع';
+      foot.textContent=`${paidText} • Total ${money(total)} • Balance ${money(balance)}`;
+
+      const btns=document.createElement('div'); btns.className='row';
+      const open=document.createElement('button'); open.className='btn-outline'; open.textContent='Open';
+      open.onclick=()=>openDlg(r);
+      const clean=document.createElement('button'); clean.className='btn-outline'; clean.textContent='Mark Clean';
+      clean.onclick=()=>{ r.status='gray'; save(); render(); };
+
+      btns.append(open, clean);
+      card.append(stripe, title, row, foot, btns);
+      grid.append(card);
+    });
+}
+
+// ======= DIALOG =======
+function openDlg(obj){
+  // If opening a room that only existed as a seed, upgrade it to a real object
+  if(!obj.id){ obj.id = Date.now(); }
+  current = obj || {status:'gray', persons:0, nights:0, rate:0, amountPaid:0, paid:'unpaid', method:'Cash'};
+
+  for(const el of frm.elements){ if(el.name){ el.value = current[el.name] ?? ''; } }
+  dlg.showModal();
+}
+document.getElementById('addBtn')?.addEventListener('click', ()=>openDlg({roomNumber:ROOM_LIST[0], status:'gray'}));
+document.getElementById('saveBtn')?.addEventListener('click', ()=>{
+  const f = Object.fromEntries(new FormData(frm).entries());
+  if(!f.roomNumber) return alert('Room number is required');
+
+  // Ensure room exists in array (by number)
+  const idx = rooms.findIndex(r => String(r.roomNumber) === String(f.roomNumber));
+  if(idx === -1){
+    rooms.push({ id: Date.now(), roomNumber: f.roomNumber });
+  }
+
+  // Write back values
+  const target = rooms.find(r => String(r.roomNumber) === String(f.roomNumber));
+  Object.assign(target, f, {
+    persons:+f.persons||0, nights:+f.nights||0, rate:+f.rate||0, amountPaid:+f.amountPaid||0
+  });
+  save(); render(); dlg.close();
+});
+document.getElementById('xBtn')?.addEventListener('click', ()=>dlg.close());
+
+// Quick totals inside dialog (optional: add live total display if you have spans)
+frm?.addEventListener('input', ()=>{/* you can add live total UI here if needed */});
+
+// ======= STATUS BUTTONS =======
+document.getElementById('checkin')?.addEventListener('click', ()=>{
+  if(!current) return; current.status='green'; save(); render(); dlg.close();
+});
+document.getElementById('checkout')?.addEventListener('click', ()=>{
+  if(!current) return;
+  if(!confirm('Check out this room? Clears guest details and marks Dirty.')) return;
+  current.status='red';
+  current.guest=''; current.phone=''; current.car=''; current.notes='';
+  current.persons=0; current.nights=0; current.rate=0; current.amountPaid=0; current.paid='unpaid'; current.method='';
+  save(); render(); dlg.close();
+});
+
+// ======= FIRST LOAD =======
+ensureAllRooms();
 render();
 </script>
-</body>
-</html>
