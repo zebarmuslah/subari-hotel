@@ -25,6 +25,10 @@
   .room{font-weight:900}
   .foot{font-size:12px;color:#666}
   .row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .note{font-size:12px;color:#b91c1c;margin-top:4px}
+  .suggest{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .pill{padding:6px 10px;border-radius:999px;border:1px solid #ddd;background:#fafafa;cursor:pointer}
+  .pill:hover{background:#f0f0f0}
   dialog{border:1px solid #ddd;border-radius:14px;background:#fff;color:#222;max-width:900px;width:min(900px,96vw)}
   dialog .hd{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #eee}
   dialog form{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px 14px}
@@ -79,9 +83,14 @@
       <option value="green">In-House</option>
       <option value="red">Dirty</option>
     </select></div>
-    <div><label>Guest</label><input name="guest" placeholder="Full name"></div>
+    <div>
+      <label>Persons</label>
+      <input type="number" min="1" value="1" name="persons">
+      <div id="capNote" class="note" style="display:none"></div>
+      <div id="suggest" class="suggest"></div>
+    </div>
 
-    <div><label>Persons</label><input type="number" min="0" value="0" name="persons"></div>
+    <div><label>Guest</label><input name="guest" placeholder="Full name"></div>
     <div><label>Nights</label><input type="number" min="0" value="0" name="nights"></div>
     <div><label>Rate / night (IQD)</label><input type="number" min="0" step="1000" value="0" name="rate"></div>
 
@@ -114,7 +123,9 @@
 </dialog>
 
 <script>
-// Always show these rooms (101–106, 201–206, 301–306, 401–406, 501–506, 601–614 except 603)
+/* -----------------------------
+   1) Always-visible room list
+------------------------------*/
 const ROOM_LIST = [
   '101','102','103','104','105','106',
   '201','202','203','204','205','206',
@@ -124,20 +135,67 @@ const ROOM_LIST = [
   '601','602','604','605','606','607','608','609','610','611','612','613','614'
 ];
 
-// Require login
+/* -----------------------------------------
+   2) Capacity + tiered pricing configuration
+   - Put exact prices for any room here.
+   - Keys are person-counts (1..6 for example).
+   - Rooms not listed fall back to FLOOR_DEFAULTS.
+------------------------------------------*/
+const ROOM_PRICING = {
+  // Your examples:
+  '101': {1:40000, 2:50000, 3:60000, 4:70000},
+  '102': {1:45000, 2:55000, 3:65000},
+  // add more specific rooms here if needed, e.g.:
+  // '201': {1:42000,2:52000,3:62000,4:72000},
+};
+
+// Floor defaults used when a room has no specific table above.
+// Floor is determined by the first digit (1xx, 2xx, 3xx...)
+const FLOOR_DEFAULTS = {
+  '1': {1:40000, 2:50000, 3:60000, 4:70000},   // First floor default
+  '2': {1:42000, 2:52000, 3:62000, 4:72000},
+  '3': {1:43000, 2:53000, 3:63000, 4:73000},
+  '4': {1:44000, 2:54000, 3:64000, 4:74000},
+  '5': {1:45000, 2:55000, 3:65000, 4:75000},
+  '6': {1:46000, 2:56000, 3:66000, 4:76000},
+};
+
+// Helper: get allowed capacities for a room from pricing keys
+function allowedPersonsFor(room){
+  const specific = ROOM_PRICING[room];
+  if (specific) return Object.keys(specific).map(n=>+n).sort((a,b)=>a-b);
+  const floor = String(room)[0];
+  const def = FLOOR_DEFAULTS[floor] || {};
+  return Object.keys(def).map(n=>+n).sort((a,b)=>a-b);
+}
+
+// Helper: get price for (room, persons)
+function priceFor(room, persons){
+  const specific = ROOM_PRICING[room];
+  if (specific && specific[persons]!=null) return specific[persons];
+  const floor = String(room)[0];
+  const def = FLOOR_DEFAULTS[floor] || {};
+  return def[persons] ?? 0; // 0 means not allowed / unknown
+}
+
+/* -----------------------------
+   3) Auth guard (needs login)
+------------------------------*/
 try{
   const ses = JSON.parse(localStorage.getItem('subari_session_v1')||'null');
   if(!ses){ location.href='login.html?v=10'; }
 }catch{ location.href='login.html?v=10'; }
 
-// Storage
+/* -----------------------------
+   4) Storage + helpers
+------------------------------*/
 const KEY='subari_fresh_v1';
 let rooms = JSON.parse(localStorage.getItem(KEY) || '[]');
 function save(){ localStorage.setItem(KEY, JSON.stringify(rooms)); }
 function money(n){ return Number(n||0).toLocaleString('en-IQ'); }
 function color(s){ return {green:'#22c55e',yellow:'#facc15',red:'#ef4444',gray:'#9ca3af'}[s] || '#ddd'; }
 
-// Ensure all rooms exist
+// Guarantee all rooms exist
 function ensureAllRooms(){
   const map=new Map(rooms.map(r=>[String(r.roomNumber), r]));
   for(const n of ROOM_LIST){
@@ -147,13 +205,17 @@ function ensureAllRooms(){
   save();
 }
 
-// DOM hooks
+/* -----------------------------
+   5) DOM
+------------------------------*/
 const grid=document.getElementById('grid');
 const dlg=document.getElementById('dlg');
 const frm=document.getElementById('frm');
 const q=document.getElementById('q');
 const totSpan=document.getElementById('tot');
 const balSpan=document.getElementById('bal');
+const capNote=document.getElementById('capNote');
+const suggestBox=document.getElementById('suggest');
 let filter='all', current=null;
 
 document.querySelectorAll('[data-filter]').forEach(b=> b.onclick=()=>{ filter=b.dataset.filter; render(); });
@@ -162,12 +224,26 @@ q.addEventListener('input', render);
 document.getElementById('addBtn').onclick = ()=>openDlg(null);
 document.getElementById('xBtn').onclick = ()=>dlg.close();
 
+/* -----------------------------
+   6) Form events & actions
+------------------------------*/
+frm.addEventListener('input', ()=>{
+  // Auto price if room & persons present
+  const f = Object.fromEntries(new FormData(frm).entries());
+  const room = String(f.roomNumber||'').trim();
+  const persons = +f.persons || 0;
+  updateCapacityUI(room, persons);
+  calcTotals();
+});
+
 document.getElementById('saveBtn').onclick = ()=>{
   const f = Object.fromEntries(new FormData(frm).entries());
   if(!f.roomNumber) return alert('Room number is required');
   let r = rooms.find(x=> String(x.roomNumber)===String(f.roomNumber));
   if(!r){ r={id:Date.now(), roomNumber:f.roomNumber}; rooms.push(r); }
-  Object.assign(r, f, { persons:+f.persons||0, nights:+f.nights||0, rate:+f.rate||0, amountPaid:+f.amountPaid||0 });
+  Object.assign(r, f, {
+    persons:+f.persons||0, nights:+f.nights||0, rate:+f.rate||0, amountPaid:+f.amountPaid||0
+  });
   save(); render(); dlg.close();
 };
 
@@ -185,23 +261,6 @@ document.getElementById('checkoutBtn').onclick = ()=>{
   current.entryDate=''; current.entryTime=''; current.checkedBy='';
   save(); render(); dlg.close();
 };
-
-function openDlg(obj){
-  current = obj || {status:'gray', persons:0, nights:0, rate:0, amountPaid:0, paid:'unpaid', method:'Cash'};
-  if(!current.id){ current.id = Date.now(); rooms.push(current); }
-  for(const el of frm.elements){ if(el.name){ el.value = current[el.name] ?? ''; } }
-  calcTotals();
-  dlg.showModal();
-}
-
-function calcTotals(){
-  const f = Object.fromEntries(new FormData(frm).entries());
-  const total = (+f.nights||0) * (+f.rate||0);
-  const balance = Math.max(0, total - (+f.amountPaid||0));
-  totSpan.textContent = money(total);
-  balSpan.textContent = money(balance);
-}
-frm.addEventListener('input', calcTotals);
 
 // Invoice
 document.getElementById('invoiceBtn').onclick = ()=>{
@@ -223,6 +282,98 @@ document.getElementById('invoiceBtn').onclick = ()=>{
   const w=window.open('about:blank','_blank'); w.document.write(html); w.document.close();
 };
 
+/* -----------------------------
+   7) Open dialog & updates
+------------------------------*/
+function openDlg(obj){
+  current = obj || {status:'gray', persons:1, nights:0, rate:0, amountPaid:0, paid:'unpaid', method:'Cash'};
+  if(!current.id){ current.id = Date.now(); rooms.push(current); }
+  for(const el of frm.elements){ if(el.name){ el.value = current[el.name] ?? ''; } }
+  // initialize capacity hints
+  const f = Object.fromEntries(new FormData(frm).entries());
+  updateCapacityUI(String(f.roomNumber||'').trim(), +f.persons||1);
+  calcTotals();
+  dlg.showModal();
+}
+
+function updateCapacityUI(room, persons){
+  // 1) Warn if capacity mismatch
+  const allowed = room ? allowedPersonsFor(room) : [];
+  const rate = (room && persons) ? priceFor(room, persons) : 0;
+
+  // Auto-set rate if available
+  if (rate>0){
+    frm.elements['rate'].value = rate;
+  }
+
+  // Capacity note
+  if (room && persons && allowed.length && !allowed.includes(persons)){
+    capNote.style.display='block';
+    capNote.textContent = `Room ${room} allows persons: ${allowed.join(', ')}.`;
+  } else {
+    capNote.style.display='none';
+    capNote.textContent = '';
+  }
+
+  // 2) Suggested rooms for this persons count (Vacant only)
+  suggestBox.innerHTML = '';
+  if (persons>0){
+    const suggestions = rooms
+      .filter(r => r.status==='gray') // available & clean
+      .filter(r => allowedPersonsFor(String(r.roomNumber)).includes(persons))
+      .map(r => String(r.roomNumber));
+
+    // If none Vacant, suggest any room (even if not Vacant) so staff can decide
+    const toShow = suggestions.length? suggestions :
+      ROOM_LIST.filter(num => allowedPersonsFor(num).includes(persons));
+
+    toShow.slice(0, 30).forEach(num=>{
+      const p = document.createElement('span');
+      p.className='pill';
+      const pr = priceFor(num, persons);
+      p.textContent = pr ? `${num} • ${money(pr)} IQD` : `${num} • N/A`;
+      p.onclick = ()=>{
+        frm.elements['roomNumber'].value = num;
+        if (pr>0) frm.elements['rate'].value = pr;
+        capNote.style.display='none';
+        calcTotals();
+      };
+      suggestBox.appendChild(p);
+    });
+  }
+}
+
+function calcTotals(){
+  const f = Object.fromEntries(new FormData(frm).entries());
+  const total = (+f.nights||0) * (+f.rate||0);
+  const balance = Math.max(0, total - (+f.amountPaid||0));
+  totSpan.textContent = money(total);
+  balSpan.textContent = money(balance);
+}
+
+/* -----------------------------
+   8) Export / Import / Reset
+------------------------------*/
+document.getElementById('exportBtn').onclick = ()=>{
+  const blob = new Blob([JSON.stringify(rooms,null,2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'subari-rooms.json'; a.click();
+};
+document.getElementById('importFile').addEventListener('change', async (e)=>{
+  try{
+    const file = e.target.files[0]; if(!file) return;
+    const txt = await file.text();
+    const arr = JSON.parse(txt);
+    if(!Array.isArray(arr)) throw new Error('Invalid JSON');
+    rooms = arr; save(); ensureAllRooms(); render(); alert('Imported successfully.');
+  }catch(err){ alert('Import failed: '+err.message); }
+});
+document.getElementById('resetBtn').onclick = ()=>{
+  if(confirm('Reset all rooms?')){ rooms=[]; save(); ensureAllRooms(); render(); }
+};
+
+/* -----------------------------
+   9) Board render
+------------------------------*/
 function render(){
   ensureAllRooms();
   const term=(q.value||'').toLowerCase();
@@ -253,7 +404,9 @@ function render(){
     });
 }
 
-// Init
+/* -----------------------------
+   10) Init
+------------------------------*/
 ensureAllRooms();
 render();
 </script>
