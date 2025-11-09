@@ -45,7 +45,7 @@ function signin(){
   if(!ok){ er.style.display='block'; return; }
   er.style.display='none';
   localStorage.setItem('subari_session_v1', JSON.stringify(ok));
-  location.href='app-white.html?v=4';
+  location.href='app.html?v=5'; // <-- IMPORTANT
 }
 document.getElementById('go').onclick=signin;
 document.getElementById('p').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); signin(); }});
