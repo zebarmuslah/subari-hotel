@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Subari Hotel — New Customer System</title>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;background:#fff;margin:0;padding:0;color:#111;}
+  header{background:#111;color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;}
+  .btn{padding:10px 14px;border:0;border-radius:8px;font-weight:bold;cursor:pointer;}
+  .btn-main{background:#111;color:#fff;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;padding:16px;}
+  .card{border:1px solid #ddd;border-radius:10px;padding:10px;box-shadow:0 3px 6px rgba(0,0,0,.1);text-align:center;}
+  .stripe{height:6px;border-radius:6px;margin-bottom:8px;}
+  .panel{position:fixed;top:0;right:-100%;width:min(800px,100%);height:100%;background:#fff;border-left:1px solid #ccc;transition:right .3s ease;padding:16px;overflow:auto;}
+  .panel.open{right:0;}
+  .panel-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.3);display:none;}
+  .panel.open + .panel-backdrop{display:block;}
+  .pill{padding:6px 10px;border-radius:20px;border:1px solid #ccc;display:inline-block;margin:4px;cursor:pointer;}
+  .pill:hover{background:#f0f0f0;}
+</style>
+</head>
+<body>
+<header>
+  <h2>Subari Hotel</h2>
+  <button id="newCustomerBtn" class="btn btn-main">New Customer</button>
+</header>
+<div id="grid" class="grid"></div>
+
+<div id="panel" class="panel">
+  <h3>Available Rooms</h3>
+  <div id="suggest"></div>
+</div>
+<div id="backdrop" class="panel-backdrop"></div>
+
+<script>
+const rooms=['101','102','103','104','105','106','201','202','203','204','205','206'];
+const ROOM_PRICING={'101':{1:40000,2:50000,3:60000},'102':{1:45000,2:55000,3:65000},'103':{1:40000,2:48000,3:56000},'104':{1:42000,2:50000,3:58000}};
+let data=rooms.map(r=>({roomNumber:r,status:'gray'}));
+function money(n){return Number(n||0).toLocaleString('en-IQ');}
+function priceFor(room,persons){const s=ROOM_PRICING[room];return s&&s[persons]?s[persons]:0;}
+
+const grid=document.getElementById('grid');
+grid.innerHTML=data.map(r=>`<div class='card'><div class='stripe' style='background:${r.status==='gray'?'#9ca3af':'#22c55e'}'></div><h4>${r.roomNumber}</h4><p>Status: ${r.status}</p></div>`).join('');
+
+const panel=document.getElementById('panel');
+const backdrop=document.getElementById('backdrop');
+const suggest=document.getElementById('suggest');
+
+document.getElementById('newCustomerBtn').onclick=()=>{
+  const val=prompt('How many persons? (1-4)');
+  if(!val)return;
+  const persons=parseInt(val);
+  openPanel(persons);
+};
+
+function openPanel(persons){
+  suggest.innerHTML='';
+  panel.classList.add('open');backdrop.style.display='block';
+  const available=data.filter(r=>r.status==='gray');
+  available.forEach(r=>{
+    const price=priceFor(r.roomNumber,persons);
+    const span=document.createElement('span');
+    span.className='pill';
+    span.textContent=`Room ${r.roomNumber} • ${money(price)} IQD`;
+    suggest.appendChild(span);
+  });
+}
+backdrop.onclick=()=>{panel.classList.remove('open');backdrop.style.display='none';};
+</script>
+</body>
+</html>
