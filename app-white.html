@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Front Desk Board</title>
+<style>
+  :root{ --green:#22c55e; --yellow:#facc15; --red:#ef4444; --gray:#9ca3af; --purple:#a855f7; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:#fff;color:#222}
+  header{padding:10px 14px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .legend{display:flex;gap:12px;font-size:13px;color:#555}
+  .chip{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:10px;height:10px;border-radius:3px;display:inline-block}
+  .sp{flex:1}
+  .btn{padding:8px 12px;border-radius:10px;border:0;background:#111;color:#fff;cursor:pointer;font-weight:800}
+  .btn-outline{padding:8px 12px;border-radius:10px;background:#fff;border:1px solid #ddd;color:#111;cursor:pointer}
+  .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid #eee}
+  .bar input{padding:10px;border-radius:10px;border:1px solid #ddd;min-width:260px}
+  .wrap{display:grid;justify-content:center;padding:16px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;max-width:1100px}
+  .card{background:#fff;border:1px solid #eee;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.05);padding:12px;display:flex;flex-direction:column;gap:8px;min-height:150px}
+  .stripe{height:6px;border-radius:6px;margin:-6px -6px 6px}
+  .room{font-weight:900}
+  .foot{font-size:12px;color:#666}
+  .row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  dialog{border:1px solid #ddd;border-radius:14px;background:#fff;color:#222;max-width:820px;width:min(820px,96vw)}
+  dialog .hd{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #eee}
+  dialog form{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px 14px}
+  dialog label{font-size:12px;color:#666}
+  dialog input, dialog select, dialog textarea{width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;background:#fff}
+  .full{grid-column:1/-1}
+  .right{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;padding:12px 14px;border-top:1px solid #eee}
+</style>
+</head>
+<body>
+
+<header>
+  <h2 style="margin:0">Front Desk Board</h2>
+  <div class="sp"></div>
+  <div class="legend">
+    <span class="chip"><span class="sw" style="background:var(--green)"></span>Green = In-House</span>
+    <span class="chip"><span class="sw" style="background:var(--yellow)"></span>Yellow = Reserved</span>
+    <span class="chip"><span class="sw" style="background:var(--red)"></span>Red = Dirty</span>
+    <span class="chip"><span class="sw" style="background:var(--gray)"></span>Gray = Vacant/Clean</span>
+  </div>
+</header>
+
+<div class="bar">
+  <input id="q" placeholder="Search room / guest / phone">
+  <button class="btn-outline" data-filter="all">All statuses</button>
+  <button class="btn-outline" data-filter="green">In-House</button>
+  <button class="btn-outline" data-filter="yellow">Reserved</button>
+  <button class="btn-outline" data-filter="red">Dirty</button>
+  <button class="btn-outline" data-filter="gray">Vacant/Clean</button>
+  <div class="sp"></div>
+  <button id="addBtn" class="btn">Add room</button>
+  <button id="exportBtn" class="btn-outline">Export JSON</button>
+  <label class="btn-outline" style="display:inline-flex;align-items:center;gap:8px;cursor:pointer">
+    <input id="importFile" type="file" accept="application/json" style="display:none"> Import JSON
+  </label>
+  <button id="resetBtn" class="btn-outline">Reset</button>
+</div>
+
+<div class="wrap"><div class="grid" id="grid"></div></div>
+
+<dialog id="dlg">
+  <div class="hd">
+    <div style="font-weight:800">Room</div>
+    <button id="xBtn" class="btn-outline">Close</button>
+  </div>
+
+  <form id="frm">
+    <div><label>Room</label><input name="roomNumber" required placeholder="101"></div>
+    <div><label>Status</label><select name="status">
+      <option value="gray">Vacant/Clean</option>
+      <option value="yellow">Reserved</option>
+      <option value="green">In-House</option>
+      <option value="red">Dirty</option>
+    </select></div>
+    <div><label>Guest name</label><input name="guest" placeholder="Full name"></div>
+    <div><label>Persons</label><input type="number" min="0" value="0" name="persons"></div>
+    <div><label>Price per night (IQD)</label><input type="number" min="0" step="1000" value="0" name="rate"></div>
+    <div><label>Nights</label><input type="number" min="0" value="0" name="nights"></div>
+    <div><label>Amount Paid (IQD)</label><input type="number" min="0" step="1000" value="0" name="amountPaid"></div>
+    <div><label>Paid? (Arabic)</label><select name="paid"><option value="unpaid">غير مدفوع</option><option value="paid">مدفوع</option></select></div>
+    <div><label>Phone</label><input name="phone" placeholder="+964"></div>
+    <div><label>Car number</label><input name="car" placeholder="plate"></div>
+    <div><label>Entry date</label><input name="entryDate" type="date"></div>
+    <div><label>Entry time</label><input name="entryTime" type="time"></div>
+    <div class="full"><label>Notes</label><textarea name="notes" rows="2"></textarea></div>
+    <div class="full" style="font-size:13px;color:#444"><strong>Total = Price × Nights <span id="tot">0</span> IQD • Balance <span id="bal">0</span> IQD</strong></div>
+  </form>
+
+  <div class="right">
+    <button id="invoiceBtn" class="btn-outline">Invoice</button>
+    <button id="reserveBtn" class="btn-outline">Reserve</button>
+    <button id="checkinBtn" class="btn-outline">Check In</button>
+    <button id="cleanBtn" class="btn-outline">Mark Clean</button>
+    <button id="dirtyBtn" class="btn-outline">Mark Dirty</button>
+    <button id="checkoutBtn" class="btn-outline">Check Out → Dirty</button>
+    <button id="saveBtn" class="btn">Save</button>
+  </div>
+</dialog>
+
+<script>
+const KEY='subari_board_v2';
+let rooms = JSON.parse(localStorage.getItem(KEY) || '[]');
+function save(){ localStorage.setItem(KEY, JSON.stringify(rooms)); }
+function moneyIQD(n){ return Number(n||0).toLocaleString('en-IQ'); }
+function color(s){ return {green:'var(--green)',yellow:'var(--yellow)',red:'var(--red)',gray:'var(--gray)'}[s] || '#ddd'; }
+
+const grid = document.getElementById('grid');
+const dlg = document.getElementById('dlg');
+const frm = document.getElementById('frm');
+const q = document.getElementById('q');
+const totSpan = document.getElementById('tot');
+const balSpan = document.getElementById('bal');
+let filter='all', current=null;
+
+document.querySelectorAll('[data-filter]').forEach(b=> b.onclick=()=>{ filter=b.dataset.filter; render(); });
+q.addEventListener('input', render);
+
+function render(){
+  const term=(q.value||'').toLowerCase();
+  grid.innerHTML='';
+  rooms
+    .filter(r => filter==='all' ? true : r.status===filter)
+    .filter(r => (r.roomNumber+' '+(r.guest||'')+' '+(r.phone||'')).toLowerCase().includes(term))
+    .sort((a,b)=>(a.roomNumber||'').localeCompare(b.roomNumber||''))
+    .forEach(r=>{
+      const card=document.createElement('div'); card.className='card';
+      const stripe=document.createElement('div'); stripe.className='stripe'; stripe.style.background=color(r.status||'gray');
+      const room=document.createElement('div'); room.className='room'; room.textContent='Room '+(r.roomNumber||'');
+      const row=document.createElement('div'); row.className='row';
+      if(r.guest) row.innerHTML+=`<span>👤 ${r.guest}</span>`;
+      if(r.persons) row.innerHTML+=`<span>• 👥 ${r.persons}</span>`;
+      if(r.nights) row.innerHTML+=`<span>• 🛌 ${r.nights}</span>`;
+      if(r.rate) row.innerHTML+=`<span>• 💵 ${moneyIQD(r.rate)}</span>`;
+      const total=(+r.nights||0)*(+r.rate||0);
+      const balance=Math.max(0,total-(+r.amountPaid||0));
+      const foot=document.createElement('div'); foot.className='foot';
+      const paidText=r.paid==='paid'?'مدفوع':'غير مدفوع';
+      foot.textContent=`${paidText} • Total ${moneyIQD(total)} • Balance ${moneyIQD(balance)}`;
+      const btns=document.createElement('div'); btns.className='row';
+      const open=document.createElement('button'); open.className='btn-outline'; open.textContent='Open'; open.onclick=()=>openDlg(r);
+      const clean=document.createElement('button'); clean.className='btn-outline'; clean.textContent='Mark Clean'; clean.onclick=()=>{ r.status='gray'; save(); render(); };
+      btns.append(open, clean);
+      card.append(stripe, room, row, foot, btns);
+      grid.append(card);
+    });
+}
+
+function openDlg(obj){
+  current = obj || {status:'gray', persons:0, nights:0, rate:0, paid:'unpaid', amountPaid:0, method:'Cash'};
+  for(const el of frm.elements){ if(el.name){ el.value = current[el.name] ?? ''; } }
+  calcTotals();
+  dlg.showModal();
+}
+
+function calcTotals(){
+  const f = Object.fromEntries(new FormData(frm).entries());
+  const total = (+f.nights||0) * (+f.rate||0);
+  const balance = Math.max(0, total - (+f.amountPaid||0));
+  totSpan.textContent = moneyIQD(total);
+  balSpan.textContent = moneyIQD(balance);
+}
+frm.addEventListener('input', calcTotals);
+
+document.getElementById('addBtn').onclick = ()=>openDlg(null);
+document.getElementById('xBtn').onclick = ()=>dlg.close();
+
+document.getElementById('saveBtn').onclick = ()=>{
+  const f = Object.fromEntries(new FormData(frm).entries());
+  if(!f.roomNumber) return alert('Room number is required');
+  if(!current.id){ current.id = Date.now(); rooms.push(current); }
+  Object.assign(current, f, { persons:+f.persons||0, nights:+f.nights||0, rate:+f.rate||0, amountPaid:+f.amountPaid||0 });
+  save(); render(); dlg.close();
+};
+
+document.getElementById('reserveBtn').onclick = ()=>{ if(!current) return; current.status='yellow'; save(); render(); dlg.close(); };
+document.getElementById('checkinBtn').onclick = ()=>{ if(!current) return; current.status='green'; save(); render(); dlg.close(); };
+document.getElementById('cleanBtn').onclick   = ()=>{ if(!current) return; current.status='gray';  save(); render(); dlg.close(); };
+document.getElementById('dirtyBtn').onclick   = ()=>{ if(!current) return; current.status='red';   save(); render(); dlg.close(); };
+
+document.getElementById('checkoutBtn').onclick = ()=>{
+  if(!current) return;
+  if(!confirm('Check out this room? This clears guest details and marks the room as Dirty.')) return;
+  current.status='red';
+  current.guest=''; current.phone=''; current.car=''; current.notes='';
+  current.persons=0; current.nights=0; current.rate=0; current.amountPaid=0; current.paid='unpaid'; current.method='';
+  save(); render(); dlg.close();
+};
+
+document.getElementById('invoiceBtn').onclick = ()=>{
+  const f = Object.fromEntries(new FormData(frm).entries());
+  const nights=+f.nights||0, rate=+f.rate||0, total=nights*rate, paid=+f.amountPaid||0, balance=Math.max(0,total-paid);
+  const html = `<html><head><meta charset="utf-8"><title>Invoice — Room ${f.roomNumber||''}</title>
+  <style>body{font-family:system-ui;padding:24px} h1{margin:0 0 8px} table{width:100%;border-collapse:collapse}
+  td,th{border:1px solid #ddd;padding:8px;text-align:left} .r{text-align:right}</style></head><body>
+  <h1>Invoice</h1>
+  <div>${f.guest||''}</div><div>Room ${f.roomNumber||''}</div><hr/>
+  <table><thead><tr><th>Description</th><th>Qty</th><th>Total</th></tr></thead>
+  <tbody><tr><td>${nights} night(s) @ ${Number(rate).toLocaleString('en-IQ')} IQD</td><td class='r'>${nights}</td><td class='r'>${Number(total).toLocaleString('en-IQ')}</td></tr></tbody></table>
+  <h3>Subtotal: ${Number(total).toLocaleString('en-IQ')} IQD</h3>
+  <div>Amount Paid: ${Number(paid).toLocaleString('en-IQ')} IQD</div>
+  <div>Balance: ${Number(balance).toLocaleString('en-IQ')} IQD</div>
+  </body></html>`;
+  const w=window.open('about:blank','_blank'); w.document.write(html); w.document.close();
+};
+
+// Seed
+if(rooms.length===0){
+  rooms=[
+    {roomNumber:'101', status:'gray'},
+    {roomNumber:'102', status:'yellow', guest:'Ali', persons:2, nights:2, rate:50000, amountPaid:0, paid:'unpaid'},
+    {roomNumber:'103', status:'green', guest:'Sara', persons:1, nights:3, rate:60000, amountPaid:60000, paid:'paid'}
+  ];
+  save();
+}
+render();
+</script>
+</body>
+</html>
