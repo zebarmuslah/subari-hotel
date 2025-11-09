@@ -5,9 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Subari Hotel — Rooms</title>
 <style>
-  :root{
-    --green:#22c55e; --yellow:#facc15; --red:#ef4444; --gray:#9ca3af; --purple:#a855f7;
-  }
+  :root{ --green:#22c55e; --yellow:#facc15; --red:#ef4444; --gray:#9ca3af; --purple:#a855f7; }
   *{box-sizing:border-box}
   body{margin:0;background:#ffffff;color:#222;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
   header{position:sticky;top:0;background:#fff;border-bottom:1px solid #eee;padding:10px 14px;display:flex;align-items:center;gap:10px;z-index:5}
@@ -34,6 +32,7 @@
   dialog input, dialog select, dialog textarea{width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;background:#fff}
   .full{grid-column:1/-1}
   .right{display:flex;gap:8px;justify-content:flex-end;padding:12px 14px;border-top:1px solid #eee}
+  .danger{border-color:#ef4444;color:#ef4444}
 </style>
 </head>
 <body>
@@ -128,17 +127,19 @@
   </form>
   <div class="right">
     <button id="invoiceBtn" class="btn-outline">Invoice</button>
+    <!-- ONE-CLICK CHECK OUT -->
+    <button id="checkoutBtn" class="btn-outline danger">Check Out → Dirty</button>
     <button id="saveBtn" class="btn">Save</button>
   </div>
 </dialog>
 
 <script>
-const KEY='subari_rooms_classic';
+const KEY='subari_rooms_classic_white';
 let rooms = JSON.parse(localStorage.getItem(KEY)||'[]');
 function save(){ localStorage.setItem(KEY, JSON.stringify(rooms)); }
 function money(x){ return Number(x||0).toLocaleString('en-IQ'); }
 function color(status){
-  return {green:'var(--green)',yellow:'var(--yellow)',red:'var(--red)',gray:'var(--gray)',purple:'var(--purple)'}[status]||'#ddd';
+  return {green:'#22c55e',yellow:'#facc15',red:'#ef4444',gray:'#9ca3af',purple:'#a855f7'}[status]||'#ddd';
 }
 
 const grid = document.getElementById('grid');
@@ -152,10 +153,7 @@ function render(){
   grid.innerHTML='';
   const list = rooms
     .filter(r=> filter==='all' ? true : r.status===filter)
-    .filter(r=>{
-      const s = (r.roomNumber+' '+(r.guest||'')+' '+(r.phone||'')).toLowerCase();
-      return s.includes(term);
-    })
+    .filter(r=> (r.roomNumber+' '+(r.guest||'')+' '+(r.phone||'')).toLowerCase().includes(term))
     .sort((a,b)=>(a.roomNumber||'').localeCompare(b.roomNumber||''));
   for(const r of list){
     const card=document.createElement('div'); card.className='card';
@@ -208,6 +206,24 @@ document.getElementById('saveBtn').onclick=()=>{
   save(); render(); dlg.close();
 };
 
+// ONE-CLICK CHECK OUT → DIRTY (clears personal info)
+document.getElementById('checkoutBtn').onclick=()=>{
+  if(!current){ alert('Open a room first'); return; }
+  if(!confirm('Check out this room? This will clear guest details and mark the room as Dirty.')) return;
+
+  current.status = 'red';     // Dirty
+  current.guest = '';
+  current.phone = '';
+  current.car = '';
+  current.notes = '';
+
+  // (Keep nights/rate/persons/paid/method for accounting. If you prefer to reset them too, uncomment:)
+  // current.persons = 0; current.nights = 0; current.rate = 0;
+  // current.paid = 'unpaid'; current.method = '';
+
+  save(); render(); dlg.close();
+};
+
 document.getElementById('invoiceBtn').onclick=()=>{
   const f=Object.fromEntries(new FormData(frm).entries());
   const nights=+f.nights||0, rate=+f.rate||0, tot=nights*rate;
@@ -218,8 +234,8 @@ document.getElementById('invoiceBtn').onclick=()=>{
   <h1>Invoice</h1>
   <div>${f.guest||''}</div><div>Room ${f.roomNumber||''}</div><hr/>
   <table><thead><tr><th>Description</th><th>Qty</th><th>Total</th></tr></thead>
-  <tbody><tr><td>${nights} night(s) @ ${money(rate)} IQD</td><td class="r">${nights}</td><td class="r">${money(tot)}</td></tr></tbody></table>
-  <h3>Grand Total: ${money(tot)} IQD</h3>
+  <tbody><tr><td>${nights} night(s) @ ${Number(rate).toLocaleString('en-IQ')} IQD</td><td class="r">${nights}</td><td class="r">${Number(tot).toLocaleString('en-IQ')}</td></tr></tbody></table>
+  <h3>Grand Total: ${Number(tot).toLocaleString('en-IQ')} IQD</h3>
   <div>Amount Paid: ${f.paid==='paid'?'Paid':'Unpaid'}</div>
   <div>Method: ${f.method||'-'}</div>
   </body></html>`;
@@ -229,7 +245,7 @@ document.getElementById('invoiceBtn').onclick=()=>{
 // auth
 document.getElementById('logoutBtn').onclick=()=>{ localStorage.removeItem('subari_session_v1'); location.href='login.html'; };
 
-// seed
+// seed (only first time)
 if(rooms.length===0){
   rooms=[
     {roomNumber:'101', status:'gray'},
