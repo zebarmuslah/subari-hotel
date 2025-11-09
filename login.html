@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Subari Hotel Login</title>
+<style>
+body{margin:0;font-family:system-ui;display:flex;justify-content:center;align-items:center;height:100vh;background:#fff}
+.card{border:1px solid #eee;padding:40px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.05);text-align:center;width:320px}
+h1{margin:0 0 20px}
+input{display:block;width:100%;margin:10px 0;padding:10px;border-radius:8px;border:1px solid #ddd}
+button{width:100%;padding:10px;border:0;border-radius:8px;background:#111;color:#fff;font-weight:bold;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>Subari Hotel</h1>
+<input id="u" placeholder="Username">
+<input id="p" type="password" placeholder="Password">
+<button id="login">Login</button>
+<p id="err" style="color:red;display:none">Invalid username or password</p>
+</div>
+<script>
+const users=[
+ {u:'frontdesk',p:'1111'},
+ {u:'manager',p:'2222'},
+ {u:'owner',p:'0000'},
+ {u:'hk1',p:'1234'}
+];
+document.getElementById('login').onclick=()=>{
+ const u=document.getElementById('u').value.trim();
+ const p=document.getElementById('p').value.trim();
+ const ok=users.find(x=>x.u===u && x.p===p);
+ if(!ok){document.getElementById('err').style.display='block';return;}
+ localStorage.setItem('user',u);
+ location.href='app.html';
+};
+</script>
+</body>
+</html>
