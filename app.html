@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Subari Hotel — App</title>
+<title>Subari Hotel — Classic Board</title>
 <style>
   :root{
     --gold:#d4af37; --gold2:#b9962b; --ink:#0f1115; --panel:#161a22; --line:#242a33; --muted:#98a0ad;
-    --green:#23c55e; --yellow:#fbbf24; --red:#ef4444; --gray:#6b7280; --purple:#a855f7;
+    --green:#22c55e; --yellow:#facc15; --red:#ef4444; --gray:#9ca3af; --purple:#a855f7;
   }
   *{box-sizing:border-box}
   body{margin:0;background:#0f1115;color:#e9eaec;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;}
@@ -18,16 +18,20 @@
   .sp{flex:1}
   .btn{padding:8px 12px;border-radius:10px;border:0;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#111;font-weight:800;cursor:pointer}
   .btn-outline{padding:8px 12px;border-radius:10px;background:transparent;border:1px solid var(--line);color:#e9eaec;cursor:pointer}
-  .legend{display:flex;gap:12px;font-size:12px;color:#b4bcc8}
-  .chip{display:inline-flex;align-items:center;gap:6px}
-  .sw{width:10px;height:10px;border-radius:3px;display:inline-block}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:14px}
-  .card{background:#0f131b;border:1px solid var(--line);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px}
-  .room-id{font-weight:900;font-size:14px}
-  .status{font-size:12px;color:#b6bdc8}
-  .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-  .tag{font-size:12px;padding:2px 6px;border:1px solid var(--line);border-radius:999px}
-  .foot{font-size:11px;color:#9aa3af}
+  .bar{display:flex;gap:10px;align-items:center;padding:10px 14px;background:#0f131b;border-bottom:1px solid var(--line)}
+  .bar input{padding:10px;border-radius:10px;border:1px solid var(--line);background:#0b0f16;color:#e9eaec}
+  table{width:100%;border-collapse:collapse}
+  th,td{border-bottom:1px solid #1f2430;padding:10px;font-size:14px}
+  th{color:#aeb6c2;text-align:left;background:#0f131b;position:sticky;top:62px}
+  tr{background:#0b0f16}
+  tr .stripe{width:6px}
+  tr[data-status="green"] .stripe{background:var(--green)}
+  tr[data-status="yellow"] .stripe{background:var(--yellow)}
+  tr[data-status="red"] .stripe{background:var(--red)}
+  tr[data-status="gray"] .stripe{background:var(--gray)}
+  tr[data-status="purple"] .stripe{background:var(--purple)}
+  .r{text-align:right}
+  .small{font-size:12px;color:#9aa3af}
   dialog{border:1px solid var(--line);border-radius:16px;background:#0f131b;color:#e9eaec;max-width:720px;width:min(720px,96vw);}
   dialog .hd{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line)}
   dialog form{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:12px 14px}
@@ -35,30 +39,48 @@
   dialog input, dialog select, dialog textarea{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:#0b0f16;color:#e9eaec}
   .full{grid-column:1/-1}
   .right{display:flex;gap:8px;justify-content:flex-end;padding:12px 14px;border-top:1px solid var(--line)}
-  .danger{border-color:#ef4444;color:#ef4444}
-  .hidden{display:none}
 </style>
 </head>
 <body>
 <header>
   <div class="logo">
     <div class="badge"><img src="assets/logo.png" alt=""></div>
-    <div><div style="font-size:12px;color:#b8c0cc">Subari Hotel</div><div style="font-weight:800">Front Desk</div></div>
-  </div>
-  <div class="legend">
-    <span class="chip"><span class="sw" style="background:#23c55e"></span><span data-i18n="legendGreen">Green=In‑House</span></span>
-    <span class="chip"><span class="sw" style="background:#fbbf24"></span><span data-i18n="legendYellow">Yellow=Reserved</span></span>
-    <span class="chip"><span class="sw" style="background:#ef4444"></span><span data-i18n="legendRed">Red=Dirty</span></span>
-    <span class="chip"><span class="sw" style="background:#6b7280"></span><span data-i18n="legendGray">Gray=Vacant</span></span>
-    <span class="chip"><span class="sw" style="background:#a855f7"></span><span data-i18n="legendPurple">Purple=Out of Order</span></span>
+    <div><div style="font-size:12px;color:#b8c0cc">Subari Hotel</div><div style="font-weight:800">Classic Board</div></div>
   </div>
   <div class="sp"></div>
   <button id="langBtn" class="btn-outline" data-i18n="langSwitch">AR / EN</button>
-  <button id="newBtn" class="btn">+ Add / Assign</button>
+  <button id="newBtn" class="btn">+ Add Room</button>
   <button id="logoutBtn" class="btn-outline" data-i18n="signout">Sign out</button>
 </header>
 
-<section class="grid" id="board"></section>
+<div class="bar">
+  <input id="q" placeholder="Search room/guest/phone…">
+  <button class="btn-outline" data-filter="all">All</button>
+  <button class="btn-outline" data-filter="green">In-House</button>
+  <button class="btn-outline" data-filter="yellow">Reserved</button>
+  <button class="btn-outline" data-filter="gray">Vacant</button>
+  <button class="btn-outline" data-filter="red">Dirty</button>
+  <button class="btn-outline" data-filter="purple">Out of Order</button>
+</div>
+
+<table id="tbl">
+  <thead>
+    <tr>
+      <th></th>
+      <th>Room</th>
+      <th data-i18n="status">Status</th>
+      <th data-i18n="guest">Guest</th>
+      <th data-i18n="phone">Phone</th>
+      <th data-i18n="persons">Persons</th>
+      <th data-i18n="nights">Nights</th>
+      <th data-i18n="rate">Rate (IQD)</th>
+      <th>Total</th>
+      <th>Paid</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody id="body"></tbody>
+</table>
 
 <dialog id="dlg">
   <div class="hd">
@@ -75,7 +97,7 @@
       <select name="status">
         <option value="gray">Vacant</option>
         <option value="yellow">Reserved</option>
-        <option value="green">In‑House</option>
+        <option value="green">In-House</option>
         <option value="red">Dirty</option>
         <option value="purple">Out of Order</option>
       </select>
@@ -123,8 +145,8 @@
       <label data-i18n="notes">Notes</label>
       <textarea name="notes" rows="2"></textarea>
     </div>
-    <div class="full">
-      <strong>Total IQD: <span id="total">0</span> — <span id="left">Unpaid</span></strong>
+    <div class="full small">
+      <strong>Total: <span id="total">0</span> — <span id="left">Unpaid</span></strong>
     </div>
   </form>
   <div class="right">
@@ -134,19 +156,17 @@
 </dialog>
 
 <script>
-// ---------- Language (EN/AR) ----------
+// ===== Language (EN/AR) =====
 const i18n = {
-  en:{legendGreen:"Green=In‑House", legendYellow:"Yellow=Reserved", legendRed:"Red=Dirty", legendGray:"Gray=Vacant", legendPurple:"Purple=Out of Order",
-      langSwitch:"AR / EN", signout:"Sign out",
-      status:"Status", guest:"Guest", phone:"Phone", car:"Car No.", persons:"Persons", nights:"Nights", rate:"Rate (IQD)", paid:"Paid?", method:"Method", notes:"Notes",
-      paidWord:"Paid", unpaidWord:"Unpaid",
-      invoiceTitle:"Invoice", desc:"Description", qty:"Qty", total:"Total", subtotal:"Subtotal", service:"Service", grand:"Grand Total", amountPaid:"Amount Paid", balance:"Balance Due", methodWord:"Method",
-      inhouse:"In‑House", reserved:"Reserved", dirty:"Dirty", vacant:"Vacant", ooo:"Out of Order"},
-  ar:{legendGreen:"أخضر = داخل الفندق", legendYellow:"أصفر = محجوز", legendRed:"أحمر = غير نظيف", legendGray:"رمادي = شاغر", legendPurple:"بنفسجي = خارج الخدمة",
-      langSwitch:"EN / AR", signout:"تسجيل الخروج",
-      status:"الحالة", guest:"الاسم", phone:"الهاتف", car:"رقم السيارة", persons:"الأشخاص", nights:"الليالي", rate:"السعر (دينار)", paid:"مدفوع؟", method:"طريقة الدفع", notes:"ملاحظات",
-      paidWord:"مدفوع", unpaidWord:"غير مدفوع",
-      invoiceTitle:"فاتورة", desc:"الوصف", qty:"الكمية", total:"المجموع", subtotal:"الإجمالي", service:"الخدمة", grand:"الإجمالي الكلي", amountPaid:"المبلغ المدفوع", balance:"المبلغ المتبقي", methodWord:"طريقة الدفع",
+  en:{langSwitch:"AR / EN", signout:"Sign out", status:"Status", guest:"Guest", phone:"Phone", car:"Car No.", persons:"Persons",
+      nights:"Nights", rate:"Rate (IQD)", paid:"Paid?", method:"Method", notes:"Notes",
+      paidWord:"Paid", unpaidWord:"Unpaid", total:"Total",
+      invoiceTitle:"Invoice", desc:"Description", qty:"Qty", totalH:"Total", subtotal:"Subtotal", service:"Service", grand:"Grand Total", amountPaid:"Amount Paid", balance:"Balance Due", methodWord:"Method",
+      inhouse:"In-House", reserved:"Reserved", dirty:"Dirty", vacant:"Vacant", ooo:"Out of Order"},
+  ar:{langSwitch:"EN / AR", signout:"تسجيل الخروج", status:"الحالة", guest:"الاسم", phone:"الهاتف", car:"رقم السيارة", persons:"الأشخاص",
+      nights:"الليالي", rate:"السعر (دينار)", paid:"مدفوع؟", method:"طريقة الدفع", notes:"ملاحظات",
+      paidWord:"مدفوع", unpaidWord:"غير مدفوع", total:"المجموع",
+      invoiceTitle:"فاتورة", desc:"الوصف", qty:"الكمية", totalH:"المجموع", subtotal:"الإجمالي", service:"الخدمة", grand:"الإجمالي الكلي", amountPaid:"المبلغ المدفوع", balance:"المبلغ المتبقي", methodWord:"طريقة الدفع",
       inhouse:"داخل الفندق", reserved:"محجوز", dirty:"غير نظيف", vacant:"شاغر", ooo:"خارج الخدمة"}
 };
 function getLang(){ return localStorage.getItem('subari_lang')||'en'; }
@@ -155,54 +175,63 @@ function applyLang(){
   const L=getLang();
   document.documentElement.dir = (L==='ar')?'rtl':'ltr';
   document.querySelectorAll('[data-i18n]').forEach(el=>{
-    const key=el.getAttribute('data-i18n');
-    el.textContent = (i18n[L][key] || el.textContent);
+    const key=el.getAttribute('data-i18n'); const pack=i18n[L]; if(pack[key]) el.textContent=pack[key];
   });
   render();
 }
-document.getElementById('langBtn').onclick=()=> setLang(getLang()==='en'?'ar':'en');
+langBtn.onclick=()=> setLang(getLang()==='en'?'ar':'en');
 window.addEventListener('load', applyLang);
 
-// ---------- Data ----------
-const KEY='subari_rooms_v1';
+// ===== Data =====
+const KEY='subari_rooms_v2';
 let rooms = JSON.parse(localStorage.getItem(KEY)||'[]');
 function save(){ localStorage.setItem(KEY, JSON.stringify(rooms)); }
 function money(x){ return Number(x||0).toLocaleString('en-IQ'); }
-function statusLabel(s){
+function statusText(s){
   const L=getLang();
-  const en={green:'In‑House', yellow:'Reserved', red:'Dirty', gray:'Vacant', purple:'Out of Order'};
+  const en={green:'In-House', yellow:'Reserved', red:'Dirty', gray:'Vacant', purple:'Out of Order'};
   const ar={green:'داخل الفندق', yellow:'محجوز', red:'غير نظيف', gray:'شاغر', purple:'خارج الخدمة'};
   return (L==='ar'?ar:en)[s]||s;
 }
 
-// ---------- Board ----------
-const board = document.getElementById('board');
-function colorOf(s){ return {green:'#052e1a',yellow:'#3d3006',red:'#3a0b0b',gray:'#1f242d',purple:'#2a0f3a'}[s]||'#1f242d'; }
+// ===== Board (Table) =====
+const body = document.getElementById('body');
+const q = document.getElementById('q');
+let filter='all';
+document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{ filter=b.dataset.filter; render(); });
+q.addEventListener('input', render);
+
 function render(){
-  board.innerHTML='';
-  rooms.sort((a,b)=>(a.roomNumber||'').localeCompare(b.roomNumber||''));
-  for(const r of rooms){
-    const card = document.createElement('div'); card.className='card'; card.style.background=colorOf(r.status||'gray');
-    const head = document.createElement('div'); head.className='row';
-    head.innerHTML = `<div class="room-id">Room ${r.roomNumber||''}</div>
-                      <div class="status">• ${statusLabel(r.status||'gray')}</div>`;
-    const row2 = document.createElement('div'); row2.className='row';
-    if(r.guest){ row2.innerHTML += `<span class="tag">${r.guest}</span>`; }
-    if(r.persons){ row2.innerHTML += `<span class="tag">👥 ${r.persons}</span>`; }
-    if(r.nights){ row2.innerHTML += `<span class="tag">🛌 ${r.nights}</span>`; }
-    if(r.rate){ row2.innerHTML += `<span class="tag">💵 ${money(r.rate)}</span>`; }
-    const left = document.createElement('div'); left.className='foot';
-    left.textContent = (getLang()==='ar') ? (r.paid==='paid'?'مدفوع':'غير مدفوع') : (r.paid==='paid'?'Paid':'Unpaid');
-    const btns = document.createElement('div'); btns.className='row';
-    const edit = document.createElement('button'); edit.className='btn-outline'; edit.textContent='Open'; edit.onclick=()=>openDlg(r);
-    const clean = document.createElement('button'); clean.className='btn-outline'; clean.textContent='Mark Clean'; clean.onclick=()=>{ r.status='gray'; save(); render(); };
-    btns.append(edit, clean);
-    card.append(head,row2,left,btns);
-    board.append(card);
+  const term=(q.value||'').toLowerCase();
+  body.innerHTML='';
+  const rows = rooms
+    .filter(r=> filter==='all' ? true : (r.status===filter))
+    .filter(r=>{
+      const s = (r.roomNumber+' '+(r.guest||'')+' '+(r.phone||'')).toLowerCase();
+      return s.includes(term);
+    })
+    .sort((a,b)=>(a.roomNumber||'').localeCompare(b.roomNumber||''));
+  for(const r of rows){
+    const tr=document.createElement('tr'); tr.dataset.status=r.status||'gray';
+    tr.innerHTML = `
+      <td class="stripe"></td>
+      <td><strong>${r.roomNumber||''}</strong></td>
+      <td>${statusText(r.status||'gray')}</td>
+      <td>${r.guest||''}</td>
+      <td>${r.phone||''}</td>
+      <td class="r">${r.persons||''}</td>
+      <td class="r">${r.nights||''}</td>
+      <td class="r">${money(r.rate||0)}</td>
+      <td class="r">${money((+r.nights||0)*(+r.rate||0))}</td>
+      <td>${getLang()==='ar' ? (r.paid==='paid'?'مدفوع':'غير مدفوع') : (r.paid==='paid'?'Paid':'Unpaid')}</td>
+      <td class="r"><button class="btn-outline">Open</button></td>
+    `;
+    tr.querySelector('button').onclick=()=>openDlg(r);
+    body.append(tr);
   }
 }
 
-// ---------- Dialog ----------
+// ===== Dialog =====
 const dlg=document.getElementById('dlg');
 const frm=document.getElementById('frm');
 const total=document.getElementById('total');
@@ -210,13 +239,13 @@ const left=document.getElementById('left');
 let current=null;
 
 function openDlg(obj){
-  current=obj || {status:'gray', persons:1, nights:1, rate:0, paid:'unpaid'};
+  current=obj || {status:'gray', persons:1, nights:1, rate:0, paid:'unpaid', method:'Cash'};
   for(const el of frm.elements){ if(el.name){ el.value = current[el.name]??''; } }
   calc();
   dlg.showModal();
 }
-document.getElementById('newBtn').onclick=()=>openDlg(null);
-document.getElementById('xBtn').onclick=()=>dlg.close();
+newBtn.onclick=()=>openDlg(null);
+xBtn.onclick=()=>dlg.close();
 frm.addEventListener('input', calc);
 
 function calc(){
@@ -227,7 +256,7 @@ function calc(){
   left.textContent = (getLang()==='ar') ? (f.paid==='paid'?'مدفوع':'غير مدفوع') : (f.paid==='paid'?'Paid':'Unpaid');
 }
 
-document.getElementById('saveBtn').onclick=()=>{
+saveBtn.onclick=()=>{
   const f=Object.fromEntries(new FormData(frm).entries());
   if(!f.roomNumber) return alert('Room number is required');
   if(!current.id){ current.id=Date.now(); rooms.push(current); }
@@ -235,7 +264,7 @@ document.getElementById('saveBtn').onclick=()=>{
   save(); render(); dlg.close();
 };
 
-document.getElementById('invoiceBtn').onclick=()=>{
+invoiceBtn.onclick=()=>{
   const f=Object.fromEntries(new FormData(frm).entries());
   const L=getLang(), T=i18n[L];
   const nights=+f.nights||0, rate=+f.rate||0, tot=nights*rate;
@@ -245,7 +274,7 @@ document.getElementById('invoiceBtn').onclick=()=>{
   <body dir="${L==='ar'?'rtl':'ltr'}">
   <h1>${T.invoiceTitle}</h1>
   <div>${f.guest||''}</div><div>Room ${f.roomNumber||''}</div><hr/>
-  <table><thead><tr><th>${T.desc}</th><th>${T.qty}</th><th>${T.total}</th></tr></thead>
+  <table><thead><tr><th>${T.desc}</th><th>${T.qty}</th><th>${T.totalH}</th></tr></thead>
   <tbody><tr><td>${nights} night(s) @ ${money(rate)} IQD</td><td class="r">${nights}</td><td class="r">${money(tot)}</td></tr></tbody></table>
   <h3>${T.grand}: ${money(tot)} IQD</h3>
   <div>${T.amountPaid}: ${f.paid==='paid'? (L==='ar'?'مدفوع':'Paid') : (L==='ar'?'غير مدفوع':'Unpaid')}</div>
@@ -254,11 +283,15 @@ document.getElementById('invoiceBtn').onclick=()=>{
   const w=window.open('about:blank','_blank'); w.document.write(html); w.document.close();
 };
 
-// ---------- Auth ----------
-document.getElementById('logoutBtn').onclick=()=>{ localStorage.removeItem('subari_session_v1'); location.href='login.html'; };
+// ===== Auth =====
+logoutBtn.onclick=()=>{ localStorage.removeItem('subari_session_v1'); location.href='login.html'; };
 
-// Seed some rooms if empty
-if(rooms.length===0){ rooms=[{roomNumber:'101', status:'gray'},{roomNumber:'102', status:'red'},{roomNumber:'103', status:'yellow'}]; save(); }
+// Seed if empty (you can delete these later)
+if(rooms.length===0){ rooms=[
+  {roomNumber:'101', status:'gray', persons:1, nights:1, rate:0, paid:'unpaid'},
+  {roomNumber:'102', status:'green', guest:'Ali', phone:'', persons:2, nights:3, rate:50000, paid:'paid'},
+  {roomNumber:'103', status:'red'}
+]; save(); }
 render();
 </script>
 </body>
