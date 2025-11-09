@@ -51,7 +51,8 @@ function signin(){
   if(!ok){ er.style.display='block'; return; }
   er.style.display='none';
   localStorage.setItem('subari_session_v1', JSON.stringify(ok));
-  location.href='app.html';
+  // cache-buster so you DON'T see the old black/gold page
+  location.href='app.html?v=white1';
 }
 document.getElementById('go').onclick=signin;
 document.getElementById('p').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); signin(); }});
