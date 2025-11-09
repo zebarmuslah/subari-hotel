@@ -3,58 +3,52 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Subari Hotel — Classic Board</title>
+<title>Subari Hotel — Rooms</title>
 <style>
   :root{
-    --gold:#d4af37; --gold2:#b9962b; --ink:#0f1115; --panel:#161a22; --line:#242a33; --muted:#98a0ad;
     --green:#22c55e; --yellow:#facc15; --red:#ef4444; --gray:#9ca3af; --purple:#a855f7;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:#0f1115;color:#e9eaec;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;}
-  header{position:sticky;top:0;background:#11151d;border-bottom:1px solid var(--line);padding:10px 14px;display:flex;align-items:center;gap:10px;z-index:5}
-  .logo{display:flex;align-items:center;gap:10px;font-weight:900}
-  .logo .badge{width:34px;height:34px;border-radius:50%;overflow:hidden;border:1px solid var(--gold)}
-  .logo .badge img{width:100%;height:100%;object-fit:cover;object-position:center}
+  body{margin:0;background:#ffffff;color:#222;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+  header{position:sticky;top:0;background:#fff;border-bottom:1px solid #eee;padding:10px 14px;display:flex;align-items:center;gap:10px;z-index:5}
+  .brand{display:flex;gap:10px;align-items:center}
+  .badge{width:32px;height:32px;border-radius:50%;overflow:hidden;border:1px solid #eee;background:#fafafa}
+  .badge img{width:100%;height:100%;object-fit:cover}
   .sp{flex:1}
-  .btn{padding:8px 12px;border-radius:10px;border:0;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#111;font-weight:800;cursor:pointer}
-  .btn-outline{padding:8px 12px;border-radius:10px;background:transparent;border:1px solid var(--line);color:#e9eaec;cursor:pointer}
-  .bar{display:flex;gap:10px;align-items:center;padding:10px 14px;background:#0f131b;border-bottom:1px solid var(--line)}
-  .bar input{padding:10px;border-radius:10px;border:1px solid var(--line);background:#0b0f16;color:#e9eaec}
-  table{width:100%;border-collapse:collapse}
-  th,td{border-bottom:1px solid #1f2430;padding:10px;font-size:14px}
-  th{color:#aeb6c2;text-align:left;background:#0f131b;position:sticky;top:62px}
-  tr{background:#0b0f16}
-  tr .stripe{width:6px}
-  tr[data-status="green"] .stripe{background:var(--green)}
-  tr[data-status="yellow"] .stripe{background:var(--yellow)}
-  tr[data-status="red"] .stripe{background:var(--red)}
-  tr[data-status="gray"] .stripe{background:var(--gray)}
-  tr[data-status="purple"] .stripe{background:var(--purple)}
-  .r{text-align:right}
-  .small{font-size:12px;color:#9aa3af}
-  dialog{border:1px solid var(--line);border-radius:16px;background:#0f131b;color:#e9eaec;max-width:720px;width:min(720px,96vw);}
-  dialog .hd{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .btn{padding:8px 12px;border-radius:10px;border:0;background:#111;color:#fff;font-weight:800;cursor:pointer}
+  .btn-outline{padding:8px 12px;border-radius:10px;background:#fff;border:1px solid #ddd;color:#111;cursor:pointer}
+  .toolbar{display:flex;gap:8px;align-items:center;background:#fff;border-bottom:1px solid #eee;padding:10px 14px;justify-content:center}
+  .toolbar input{width:min(420px,80vw);padding:10px;border-radius:10px;border:1px solid #ddd}
+  /* Center grid */
+  .wrap{display:grid;place-items:start;justify-content:center;padding:16px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));gap:14px;max-width:1100px}
+  .card{background:#fff;border:1px solid #eee;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.05);padding:12px;display:flex;flex-direction:column;gap:8px;min-height:150px}
+  .stripe{height:6px;border-radius:6px;margin:-6px -6px 6px}
+  .room{font-weight:900}
+  .foot{font-size:12px;color:#666}
+  .row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  dialog{border:1px solid #ddd;border-radius:14px;background:#fff;color:#222;max-width:720px;width:min(720px,96vw);}
+  dialog .hd{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #eee}
   dialog form{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:12px 14px}
-  dialog label{font-size:12px;color:#9aa3af}
-  dialog input, dialog select, dialog textarea{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:#0b0f16;color:#e9eaec}
+  dialog label{font-size:12px;color:#666}
+  dialog input, dialog select, dialog textarea{width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;background:#fff}
   .full{grid-column:1/-1}
-  .right{display:flex;gap:8px;justify-content:flex-end;padding:12px 14px;border-top:1px solid var(--line)}
+  .right{display:flex;gap:8px;justify-content:flex-end;padding:12px 14px;border-top:1px solid #eee}
 </style>
 </head>
 <body>
 <header>
-  <div class="logo">
+  <div class="brand">
     <div class="badge"><img src="assets/logo.png" alt=""></div>
-    <div><div style="font-size:12px;color:#b8c0cc">Subari Hotel</div><div style="font-weight:800">Classic Board</div></div>
+    <div><div style="font-size:12px;color:#666">Subari Hotel</div><div style="font-weight:800">Rooms</div></div>
   </div>
   <div class="sp"></div>
-  <button id="langBtn" class="btn-outline" data-i18n="langSwitch">AR / EN</button>
   <button id="newBtn" class="btn">+ Add Room</button>
-  <button id="logoutBtn" class="btn-outline" data-i18n="signout">Sign out</button>
+  <button id="logoutBtn" class="btn-outline">Sign out</button>
 </header>
 
-<div class="bar">
-  <input id="q" placeholder="Search room/guest/phone…">
+<div class="toolbar">
+  <input id="q" placeholder="Search room / guest / phone">
   <button class="btn-outline" data-filter="all">All</button>
   <button class="btn-outline" data-filter="green">In-House</button>
   <button class="btn-outline" data-filter="yellow">Reserved</button>
@@ -63,24 +57,7 @@
   <button class="btn-outline" data-filter="purple">Out of Order</button>
 </div>
 
-<table id="tbl">
-  <thead>
-    <tr>
-      <th></th>
-      <th>Room</th>
-      <th data-i18n="status">Status</th>
-      <th data-i18n="guest">Guest</th>
-      <th data-i18n="phone">Phone</th>
-      <th data-i18n="persons">Persons</th>
-      <th data-i18n="nights">Nights</th>
-      <th data-i18n="rate">Rate (IQD)</th>
-      <th>Total</th>
-      <th>Paid</th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody id="body"></tbody>
-</table>
+<div class="wrap"><div class="grid" id="grid"></div></div>
 
 <dialog id="dlg">
   <div class="hd">
@@ -93,7 +70,7 @@
       <input name="roomNumber" required placeholder="101">
     </div>
     <div>
-      <label data-i18n="status">Status</label>
+      <label>Status</label>
       <select name="status">
         <option value="gray">Vacant</option>
         <option value="yellow">Reserved</option>
@@ -103,38 +80,38 @@
       </select>
     </div>
     <div>
-      <label data-i18n="guest">Guest</label>
+      <label>Guest</label>
       <input name="guest" placeholder="Full name">
     </div>
     <div>
-      <label data-i18n="phone">Phone</label>
+      <label>Phone</label>
       <input name="phone" placeholder="+964">
     </div>
     <div>
-      <label data-i18n="car">Car No.</label>
+      <label>Car No.</label>
       <input name="car" placeholder="plate">
     </div>
     <div>
-      <label data-i18n="persons">Persons</label>
+      <label>Persons</label>
       <input type="number" min="1" value="1" name="persons">
     </div>
     <div>
-      <label data-i18n="nights">Nights</label>
+      <label>Nights</label>
       <input type="number" min="1" value="1" name="nights">
     </div>
     <div>
-      <label data-i18n="rate">Rate (IQD)</label>
+      <label>Rate (IQD)</label>
       <input type="number" min="0" step="1000" value="0" name="rate">
     </div>
     <div>
-      <label data-i18n="paid">Paid?</label>
+      <label>Paid?</label>
       <select name="paid">
         <option value="unpaid">Unpaid</option>
         <option value="paid">Paid</option>
       </select>
     </div>
     <div>
-      <label data-i18n="method">Method</label>
+      <label>Method</label>
       <select name="method">
         <option>Cash</option>
         <option>Card</option>
@@ -142,96 +119,64 @@
       </select>
     </div>
     <div class="full">
-      <label data-i18n="notes">Notes</label>
+      <label>Notes</label>
       <textarea name="notes" rows="2"></textarea>
     </div>
-    <div class="full small">
-      <strong>Total: <span id="total">0</span> — <span id="left">Unpaid</span></strong>
+    <div class="full" style="font-size:12px;color:#444">
+      <strong>Total IQD: <span id="total">0</span> — <span id="left">Unpaid</span></strong>
     </div>
   </form>
   <div class="right">
-    <button id="invoiceBtn" class="btn-outline" data-i18n="invoice">Invoice</button>
+    <button id="invoiceBtn" class="btn-outline">Invoice</button>
     <button id="saveBtn" class="btn">Save</button>
   </div>
 </dialog>
 
 <script>
-// ===== Language (EN/AR) =====
-const i18n = {
-  en:{langSwitch:"AR / EN", signout:"Sign out", status:"Status", guest:"Guest", phone:"Phone", car:"Car No.", persons:"Persons",
-      nights:"Nights", rate:"Rate (IQD)", paid:"Paid?", method:"Method", notes:"Notes",
-      paidWord:"Paid", unpaidWord:"Unpaid", total:"Total",
-      invoiceTitle:"Invoice", desc:"Description", qty:"Qty", totalH:"Total", subtotal:"Subtotal", service:"Service", grand:"Grand Total", amountPaid:"Amount Paid", balance:"Balance Due", methodWord:"Method",
-      inhouse:"In-House", reserved:"Reserved", dirty:"Dirty", vacant:"Vacant", ooo:"Out of Order"},
-  ar:{langSwitch:"EN / AR", signout:"تسجيل الخروج", status:"الحالة", guest:"الاسم", phone:"الهاتف", car:"رقم السيارة", persons:"الأشخاص",
-      nights:"الليالي", rate:"السعر (دينار)", paid:"مدفوع؟", method:"طريقة الدفع", notes:"ملاحظات",
-      paidWord:"مدفوع", unpaidWord:"غير مدفوع", total:"المجموع",
-      invoiceTitle:"فاتورة", desc:"الوصف", qty:"الكمية", totalH:"المجموع", subtotal:"الإجمالي", service:"الخدمة", grand:"الإجمالي الكلي", amountPaid:"المبلغ المدفوع", balance:"المبلغ المتبقي", methodWord:"طريقة الدفع",
-      inhouse:"داخل الفندق", reserved:"محجوز", dirty:"غير نظيف", vacant:"شاغر", ooo:"خارج الخدمة"}
-};
-function getLang(){ return localStorage.getItem('subari_lang')||'en'; }
-function setLang(l){ localStorage.setItem('subari_lang', l); applyLang(); }
-function applyLang(){
-  const L=getLang();
-  document.documentElement.dir = (L==='ar')?'rtl':'ltr';
-  document.querySelectorAll('[data-i18n]').forEach(el=>{
-    const key=el.getAttribute('data-i18n'); const pack=i18n[L]; if(pack[key]) el.textContent=pack[key];
-  });
-  render();
-}
-langBtn.onclick=()=> setLang(getLang()==='en'?'ar':'en');
-window.addEventListener('load', applyLang);
-
-// ===== Data =====
-const KEY='subari_rooms_v2';
+const KEY='subari_rooms_classic';
 let rooms = JSON.parse(localStorage.getItem(KEY)||'[]');
 function save(){ localStorage.setItem(KEY, JSON.stringify(rooms)); }
 function money(x){ return Number(x||0).toLocaleString('en-IQ'); }
-function statusText(s){
-  const L=getLang();
-  const en={green:'In-House', yellow:'Reserved', red:'Dirty', gray:'Vacant', purple:'Out of Order'};
-  const ar={green:'داخل الفندق', yellow:'محجوز', red:'غير نظيف', gray:'شاغر', purple:'خارج الخدمة'};
-  return (L==='ar'?ar:en)[s]||s;
+function color(status){
+  return {green:'var(--green)',yellow:'var(--yellow)',red:'var(--red)',gray:'var(--gray)',purple:'var(--purple)'}[status]||'#ddd';
 }
 
-// ===== Board (Table) =====
-const body = document.getElementById('body');
+const grid = document.getElementById('grid');
 const q = document.getElementById('q');
 let filter='all';
-document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{ filter=b.dataset.filter; render(); });
+document.querySelectorAll('[data-filter]').forEach(b=> b.onclick=()=>{ filter=b.dataset.filter; render(); });
 q.addEventListener('input', render);
 
 function render(){
   const term=(q.value||'').toLowerCase();
-  body.innerHTML='';
-  const rows = rooms
-    .filter(r=> filter==='all' ? true : (r.status===filter))
+  grid.innerHTML='';
+  const list = rooms
+    .filter(r=> filter==='all' ? true : r.status===filter)
     .filter(r=>{
       const s = (r.roomNumber+' '+(r.guest||'')+' '+(r.phone||'')).toLowerCase();
       return s.includes(term);
     })
     .sort((a,b)=>(a.roomNumber||'').localeCompare(b.roomNumber||''));
-  for(const r of rows){
-    const tr=document.createElement('tr'); tr.dataset.status=r.status||'gray';
-    tr.innerHTML = `
-      <td class="stripe"></td>
-      <td><strong>${r.roomNumber||''}</strong></td>
-      <td>${statusText(r.status||'gray')}</td>
-      <td>${r.guest||''}</td>
-      <td>${r.phone||''}</td>
-      <td class="r">${r.persons||''}</td>
-      <td class="r">${r.nights||''}</td>
-      <td class="r">${money(r.rate||0)}</td>
-      <td class="r">${money((+r.nights||0)*(+r.rate||0))}</td>
-      <td>${getLang()==='ar' ? (r.paid==='paid'?'مدفوع':'غير مدفوع') : (r.paid==='paid'?'Paid':'Unpaid')}</td>
-      <td class="r"><button class="btn-outline">Open</button></td>
-    `;
-    tr.querySelector('button').onclick=()=>openDlg(r);
-    body.append(tr);
+  for(const r of list){
+    const card=document.createElement('div'); card.className='card';
+    const stripe=document.createElement('div'); stripe.className='stripe'; stripe.style.background=color(r.status||'gray');
+    const room=document.createElement('div'); room.className='room'; room.textContent='Room '+(r.roomNumber||'');
+    const row=document.createElement('div'); row.className='row';
+    if(r.guest) row.innerHTML+=`<span>👤 ${r.guest}</span>`;
+    if(r.persons) row.innerHTML+=`<span>• 👥 ${r.persons}</span>`;
+    if(r.nights) row.innerHTML+=`<span>• 🛌 ${r.nights}</span>`;
+    if(r.rate) row.innerHTML+=`<span>• 💵 ${money(r.rate)}</span>`;
+    const foot=document.createElement('div'); foot.className='foot';
+    foot.textContent = (r.paid==='paid'?'Paid':'Unpaid') + (r.method?(' • '+r.method):'');
+    const btns=document.createElement('div'); btns.className='row';
+    const open=document.createElement('button'); open.className='btn-outline'; open.textContent='Open'; open.onclick=()=>openDlg(r);
+    const clean=document.createElement('button'); clean.className='btn-outline'; clean.textContent='Mark Clean'; clean.onclick=()=>{ r.status='gray'; save(); render(); };
+    btns.append(open, clean);
+    card.append(stripe, room, row, foot, btns);
+    grid.append(card);
   }
 }
 
-// ===== Dialog =====
 const dlg=document.getElementById('dlg');
 const frm=document.getElementById('frm');
 const total=document.getElementById('total');
@@ -239,24 +184,23 @@ const left=document.getElementById('left');
 let current=null;
 
 function openDlg(obj){
-  current=obj || {status:'gray', persons:1, nights:1, rate:0, paid:'unpaid', method:'Cash'};
+  current=obj || {status:'gray',persons:1,nights:1,rate:0,paid:'unpaid',method:'Cash'};
   for(const el of frm.elements){ if(el.name){ el.value = current[el.name]??''; } }
   calc();
   dlg.showModal();
 }
-newBtn.onclick=()=>openDlg(null);
-xBtn.onclick=()=>dlg.close();
+document.getElementById('newBtn').onclick = ()=>openDlg(null);
+document.getElementById('xBtn').onclick = ()=>dlg.close();
 frm.addEventListener('input', calc);
 
 function calc(){
   const f=Object.fromEntries(new FormData(frm).entries());
-  const nights=+f.nights||0, rate=+f.rate||0;
-  const tot = nights*rate;
+  const tot=(+f.nights||0)*(+f.rate||0);
   total.textContent = money(tot);
-  left.textContent = (getLang()==='ar') ? (f.paid==='paid'?'مدفوع':'غير مدفوع') : (f.paid==='paid'?'Paid':'Unpaid');
+  left.textContent = (f.paid==='paid') ? 'Paid' : 'Unpaid';
 }
 
-saveBtn.onclick=()=>{
+document.getElementById('saveBtn').onclick=()=>{
   const f=Object.fromEntries(new FormData(frm).entries());
   if(!f.roomNumber) return alert('Room number is required');
   if(!current.id){ current.id=Date.now(); rooms.push(current); }
@@ -264,34 +208,37 @@ saveBtn.onclick=()=>{
   save(); render(); dlg.close();
 };
 
-invoiceBtn.onclick=()=>{
+document.getElementById('invoiceBtn').onclick=()=>{
   const f=Object.fromEntries(new FormData(frm).entries());
-  const L=getLang(), T=i18n[L];
   const nights=+f.nights||0, rate=+f.rate||0, tot=nights*rate;
-  const html=`<html><head><meta charset="utf-8"><title>${T.invoiceTitle} — Room ${f.roomNumber}</title>
+  const html=`<html><head><meta charset="utf-8"><title>Invoice — Room ${f.roomNumber}</title>
   <style>body{font-family:system-ui;padding:24px} h1{margin:0 0 8px} table{width:100%;border-collapse:collapse}
-  td,th{border:1px solid #ddd;padding:8px;text-align:${L==='ar'?'right':'left'}} .r{text-align:right}</style></head>
-  <body dir="${L==='ar'?'rtl':'ltr'}">
-  <h1>${T.invoiceTitle}</h1>
+  td,th{border:1px solid #ddd;padding:8px;text-align:left} .r{text-align:right}</style></head>
+  <body>
+  <h1>Invoice</h1>
   <div>${f.guest||''}</div><div>Room ${f.roomNumber||''}</div><hr/>
-  <table><thead><tr><th>${T.desc}</th><th>${T.qty}</th><th>${T.totalH}</th></tr></thead>
+  <table><thead><tr><th>Description</th><th>Qty</th><th>Total</th></tr></thead>
   <tbody><tr><td>${nights} night(s) @ ${money(rate)} IQD</td><td class="r">${nights}</td><td class="r">${money(tot)}</td></tr></tbody></table>
-  <h3>${T.grand}: ${money(tot)} IQD</h3>
-  <div>${T.amountPaid}: ${f.paid==='paid'? (L==='ar'?'مدفوع':'Paid') : (L==='ar'?'غير مدفوع':'Unpaid')}</div>
-  <div>${T.methodWord}: ${f.method||'-'}</div>
+  <h3>Grand Total: ${money(tot)} IQD</h3>
+  <div>Amount Paid: ${f.paid==='paid'?'Paid':'Unpaid'}</div>
+  <div>Method: ${f.method||'-'}</div>
   </body></html>`;
   const w=window.open('about:blank','_blank'); w.document.write(html); w.document.close();
 };
 
-// ===== Auth =====
-logoutBtn.onclick=()=>{ localStorage.removeItem('subari_session_v1'); location.href='login.html'; };
+// auth
+document.getElementById('logoutBtn').onclick=()=>{ localStorage.removeItem('subari_session_v1'); location.href='login.html'; };
 
-// Seed if empty (you can delete these later)
-if(rooms.length===0){ rooms=[
-  {roomNumber:'101', status:'gray', persons:1, nights:1, rate:0, paid:'unpaid'},
-  {roomNumber:'102', status:'green', guest:'Ali', phone:'', persons:2, nights:3, rate:50000, paid:'paid'},
-  {roomNumber:'103', status:'red'}
-]; save(); }
+// seed
+if(rooms.length===0){
+  rooms=[
+    {roomNumber:'101', status:'gray'},
+    {roomNumber:'102', status:'yellow', guest:'Ali', persons:2, nights:2, rate:50000, paid:'unpaid', method:'Cash'},
+    {roomNumber:'103', status:'green', guest:'Sara', persons:1, nights:3, rate:60000, paid:'paid', method:'Card'},
+    {roomNumber:'104', status:'red'}
+  ];
+  save();
+}
 render();
 </script>
 </body>
