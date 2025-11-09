@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Subari Login — v5.4.2</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;margin:0;background:#f6f8fb;color:#20262d}
+    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:18px;box-shadow:0 12px 48px rgba(0,0,0,.1);width:min(420px,92vw)}
+    h1{margin:0 0 8px;font-size:18px}
+    label{display:block;font-size:12px;color:#475569;font-weight:800;margin-top:8px}
+    input{width:100%;padding:10px 12px;border:1px solid #dfe6e9;border-radius:10px;background:#fff;font-size:14px}
+    button{margin-top:12px;border:0;padding:10px 14px;border-radius:8px;font-weight:700;background:#0e69ff;color:#fff;cursor:pointer;width:100%}
+    .small{font-size:12px;color:#6b7280;margin-top:6px}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>Sign in</h1>
+    <label>Username</label>
+    <input id="u" placeholder="frontdesk">
+    <label>Password</label>
+    <input id="p" type="password" placeholder="••••">
+    <div class="small">Default: <b>frontdesk/1111</b>, <b>manager/2222</b>, <b>owner/0000</b>, <b>hk1/1234</b></div>
+    <button id="go">Enter</button>
+  </div>
+</div>
+<script>
+const settingsKey = "subari_settings_v5_4";
+const DEFAULT_SETTINGS = {
+  users:[
+    {username:"frontdesk", name:"Front Desk", password:"1111", role:"staff", perms:{rooms:true, payments:true, housekeeping:true, reports:false, settings:false, cloud:false, audit:false}},
+    {username:"manager", name:"Duty Manager", password:"2222", role:"manager", perms:{rooms:true, payments:true, housekeeping:true, reports:true, settings:true, cloud:true, audit:true}},
+    {username:"owner", name:"Owner", password:"0000", role:"owner", perms:{rooms:true, payments:true, housekeeping:true, reports:true, settings:true, cloud:true, audit:true}},
+    {username:"hk1", name:"HK-Ali", password:"1234", role:"housekeeping", perms:{rooms:false, payments:false, housekeeping:true, reports:false, settings:false, cloud:false, audit:false}}
+  ]
+};
+function loadSettings(){
+  try{ return Object.assign({}, DEFAULT_SETTINGS, JSON.parse(localStorage.getItem(settingsKey)||"{}")); }catch(e){ return DEFAULT_SETTINGS; }
+}
+document.getElementById('go').addEventListener('click', ()=>{
+  const u=(document.getElementById('u').value||'').trim();
+  const p=(document.getElementById('p').value||'').trim();
+  const s = loadSettings();
+  const m = (s.users||[]).find(x=>x.username===u && x.password===p);
+  if(!m){ alert('Wrong username or password.'); return; }
+  // Store "session" for index to read
+  localStorage.setItem('subari_session_v1', JSON.stringify(m));
+  location.href = 'index.html';
+});
+</script>
+</body>
+</html>

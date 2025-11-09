@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Subari Hotel — Front Desk v5.4.2</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1d3c8a">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+  :root{ --green:#2ecc71; --yellow:#f1c40f; --red:#e74c3c; --gray:#95a5a6; --purple:#7e57c2; --blue:#1d3c8a; --card:#fff; --border:#e6eaee; --text:#20262d; --muted:#66707a; }
+  *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:#f6f8fb;color:var(--text);}
+  header{position:sticky;top:0;z-index:10;background:var(--blue);color:#fff;border-bottom:1px solid rgba(0,0,0,.1);padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  header h1{margin:0;font-size:18px;font-weight:800;letter-spacing:.3px}
+  .pill{display:inline-flex;align-items:center;gap:8px;background:#10306f;color:#cfe1ff;padding:6px 10px;border-radius:8px;white-space:nowrap}
+  .legend{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .dot{width:10px;height:10px;border-radius:50%}
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-left:auto}
+  input[type="search"], select{font-size:14px;padding:9px 10px;border:1px solid #d5dbe1;border-radius:8px;background:#fff;min-width:170px}
+  button{border:0;padding:10px 14px;border-radius:8px;font-weight:700;cursor:pointer}
+  .btn{background:#0e69ff;color:#fff} .btn-outline{background:#fff;border:1px solid #d5dbe1;color:#1f2937} .btn-ghost{background:transparent;color:#dbe6ff}
+  .board{padding:16px;display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+  .room{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px;cursor:pointer;display:flex;flex-direction:column;gap:6px;position:relative;min-height:156px;box-shadow:0 1px 0 rgba(0,0,0,.03)}
+  .room:hover{box-shadow:0 8px 24px rgba(0,0,0,.08)}
+  .badge{position:absolute;top:10px;right:10px;padding:4px 8px;border-radius:999px;font-size:12px;color:#fff;font-weight:800}
+  .status-green{background:var(--green)} .status-yellow{background:var(--yellow);color:#000} .status-red{background:var(--red)} .status-gray{background:var(--gray)} .status-purple{background:var(--purple)}
+  .roomnum{font-weight:800;font-size:18px} .name{font-weight:800} .muted{color:var(--muted);font-size:12px}
+  .left-ar{position:absolute;left:10px;bottom:10px;font-size:12px;font-weight:800}
+  .right-price{position:absolute;right:10px;bottom:10px;font-size:14px;font-weight:800;text-align:right}
+  .subline{position:absolute;right:10px;bottom:28px;font-size:11px;color:var(--muted)}
+
+  dialog{border:0;border-radius:16px;width:min(980px,96vw);padding:0;box-shadow:0 12px 48px rgba(0,0,0,.2)}
+  dialog::backdrop{background:rgba(0,0,0,.35)} .sheet{padding:16px 16px 20px;background:#fff;border-radius:16px}
+  .grid{display:grid;gap:10px;grid-template-columns:repeat(3,minmax(0,1fr))} .grid .full{grid-column:1/-1}
+  label{font-size:12px;color:#475569;font-weight:800;letter-spacing:.02em}
+  input,textarea,select{width:100%;padding:10px 12px;border:1px solid #dfe6e9;border-radius:10px;background:#fff;font-size:14px}
+  textarea{min-height:70px;resize:vertical} .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+  .section{margin-top:8px;padding-top:8px;border-top:1px dashed #e5e7eb}
+  .small{font-size:12px;color:#6b7280}
+  .brand{display:flex;align-items:center;gap:10px}
+  .tag{display:inline-block;background:#eef2ff;border:1px solid #c7d2fe;color:#1d3c8a;border-radius:999px;padding:2px 8px;font-size:11px;margin-left:6px}
+  .warn{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:8px;padding:6px 8px;font-size:12px;margin-top:4px}
+  .permchip{display:inline-block;border:1px solid #d5dbe1;border-radius:999px;padding:2px 8px;margin:2px;font-size:11px}
+  .hkchip{display:inline-block;background:#eefbf3;border:1px solid #b7f0cf;color:#0a6b3f;border-radius:999px;padding:2px 8px;margin:2px;font-size:11px}
+  .hkpend{display:inline-block;background:#fff7ed;border:1px solid #ffe3bd;color:#9a3412;border-radius:999px;padding:2px 8px;margin:2px;font-size:11px}
+
+  /* Inline login fallback */
+  #loginOverlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:20}
+  #loginCard{background:#fff;padding:16px;border-radius:16px;box-shadow:0 12px 48px rgba(0,0,0,.2);width:min(420px,92vw)}
+  #loginCard h2{margin:0 0 8px}
+  #loginCard .grid{grid-template-columns:1fr}
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <img src="logo.jpg" alt="Subari Hotel Logo" style="height:48px;object-fit:contain;border-radius:6px;" />
+      <h1>Subari Hotel — Front Desk <span class="tag" id="roleTag"></span> <span class="tag" id="userTag"></span></h1>
+    </div>
+    <div class="pill legend"><span class="dot" style="background:var(--green)"></span> Green=In‑House</div>
+    <div class="pill legend"><span class="dot" style="background:var(--yellow)"></span> Yellow=Reserved</div>
+    <div class="pill legend"><span class="dot" style="background:var(--red)"></span> Red=Dirty</div>
+    <div class="pill legend"><span class="dot" style="background:var(--gray)"></span> Gray=Vacant</div>
+    <div class="pill legend"><span class="dot" style="background:var(--purple)"></span> Purple=Out of Order</div>
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="Search room or guest…" />
+      <select id="filter">
+        <option value="all">All</option>
+        <option value="green">In‑House</option>
+        <option value="yellow">Reserved</option>
+        <option value="red">Dirty</option>
+        <option value="gray">Vacant</option>
+        <option value="purple">Out of Order</option>
+      </select>
+      <button class="btn-outline" id="calendarBtn">Calendar</button>
+      <button class="btn-outline" id="hkListBtn">Housekeeping</button>
+      <button class="btn-outline" id="myTasksBtn">My Tasks</button>
+      <button class="btn-outline" id="reportsBtn">Reports</button>
+      <button class="btn-outline" id="auditBtn">Audit Log</button>
+      <button class="btn-outline" id="settingsBtn">Settings</button>
+      <button class="btn-outline" id="signoutBtn">Sign out</button>
+      <button class="btn-ghost" id="exportBtn">Export JSON</button>
+      <label class="btn-outline" for="importFile" style="cursor:pointer;">Import</label>
+      <input id="importFile" type="file" accept="application/json" style="display:none" />
+    </div>
+  
+  <div class="toolbar" style="padding:8px 16px; background:#eef2ff; border-bottom:1px solid #dde3f0;" id="notSignedToolbar">
+    <span class="small">Not signed in</span>
+    <button class="btn" id="forceLoginBtn">Sign in</button>
+  </div>
+</header>
+
+  <main class="board" id="board">
+  <!-- Inline login fallback (appears if <dialog> is blocked) -->
+  <div id="loginOverlay" style="display:flex">
+    <div id="loginCard">
+      <h2>Sign in</h2>
+      <div class="grid">
+        <div class="full"><label>Username</label><input id="olUser" placeholder="e.g., frontdesk" /></div>
+        <div class="full"><label>Password</label><input id="olPass" type="password" placeholder="••••" /></div>
+      </div>
+      <div class="small" style="margin-top:6px">Default: <strong>frontdesk/1111</strong>, <strong>manager/2222</strong>, <strong>owner/0000</strong>, <strong>hk1/1234</strong></div>
+      <div class="actions"><button class="btn" id="olEnter">Enter</button></div>
+    </div>
+  </div>
+</main>
+
+  <!-- Login dialog (username + password) -->
+  <dialog id="loginDialog">
+    <form method="dialog" class="sheet" id="loginForm">
+      <h2>Sign in</h2>
+      <div class="grid">
+        <div class="full"><label>Username</label><input id="loginUser" placeholder="e.g., frontdesk" /></div>
+        <div class="full"><label>Password</label><input id="loginPass" type="password" placeholder="••••" /></div>
+      </div>
+      <div class="small">Default accounts: <strong>frontdesk/1111</strong> (Staff), <strong>manager/2222</strong> (Manager), <strong>owner/0000</strong> (Owner), <strong>hk1/1234</strong> (Housekeeping)</div>
+      <div class="actions"><button class="btn" id="loginOk">Enter</button></div>
+    </form>
+  </dialog>
+
+  <!-- Room dialog -->
+  <dialog id="roomDialog">
+    <form method="dialog" class="sheet" id="roomForm">
+      <h2>Room <span id="dlgRoomNum"></span></h2>
+      <div class="warn" id="warnConflict" style="display:none;">⚠️ Date conflict or overstay detected.</div>
+      <div class="grid">
+        <div><label>Guest name</label><input id="f_guest" /></div>
+        <div><label>Persons</label><input id="f_persons" type="number" min="1" step="1" /></div>
+        <div><label>Room type</label><select id="f_roomType"><option>Standard</option><option>Deluxe</option><option>Suite</option></select></div>
+        <div><label>Phone</label><input id="f_phone" placeholder="+964" /></div>
+        <div><label>Car number</label><input id="f_car" /></div>
+        <div><label>Entry date</label><input id="f_entryDate" type="date" /></div>
+        <div><label>Entry time</label><input id="f_entryTime" type="time" /></div>
+
+        <div><label>Price per night</label><input id="f_price" type="number" min="0" step="500" /></div>
+        <div><label>Nights</label><div style="display:flex;gap:6px"><button id="decNight" class="btn-outline" type="button">−</button><input id="f_nights" type="number" min="1" step="1" style="flex:1"/><button id="incNight" class="btn-outline" type="button">+</button></div></div>
+
+        <div><label>Paid? (Arabic)</label><select id="f_paid"><option value="unpaid">غير مدفوع</option><option value="paid">مدفوع</option></select></div>
+        <div><label>Deposit Paid</label><input id="f_deposit" type="number" min="0" step="500" /></div>
+        <div><label>Final Paid</label><input id="f_finalPaid" type="number" min="0" step="500" /></div>
+        <div><label>Payment Method</label><select id="f_payMethod"><option value="cash">Cash</option><option value="card">Card</option><option value="bank">Bank</option></select></div>
+        <div><label>Payment Ref</label><input id="f_payRef" placeholder="Card last4 / bank slip" /></div>
+
+        <div class="full section"><strong>Extras</strong> <button class="btn-outline" id="addExtra" type="button">Add Extra</button></div>
+        <div class="full" id="extrasContainer"></div>
+
+        <div class="full section"><strong>Timing</strong></div>
+        <div><label>Early check-in (HH:MM)</label><input id="f_early" placeholder="12:00" /></div>
+        <div><label>Late check-out (HH:MM)</label><input id="f_late" placeholder="14:00" /></div>
+
+        <div class="full section"><strong>Housekeeping</strong></div>
+        <div><label>Assign housekeeping</label>
+          <select id="f_hkAssign" multiple size="5"></select>
+          <div class="small">Hold Ctrl/⌘ to select multiple. Only Manager/Owner can edit assignments.</div>
+        </div>
+        <div class="full">
+          <div id="hkTaskBadges" class="small"></div>
+        </div>
+
+        <div class="full section"><strong>Out of Order</strong></div>
+        <div><label>Reason</label><input id="f_oorReason" /></div>
+        <div><label>ETA back in service</label><input id="f_oorEta" type="date" /></div>
+
+        <div class="full"><label>Notes</label><textarea id="f_notes"></textarea></div>
+      </div>
+
+      <div class="actions">
+        <div style="margin-right:auto;display:flex;gap:8px;align-items:center;" class="small">
+          <span>Total</span> <strong id="liveTotal">0</strong>
+          <span>• Balance</span> <strong id="liveBalance">0</strong>
+        </div>
+        <button class="btn-outline" id="btnRegCard">Registration Card</button>
+        <button class="btn-outline" id="btnInvoice">Invoice (EN/AR)</button>
+        <button class="btn-outline" id="actReserve">Reserve</button>
+        <button class="btn-outline" id="actCheckIn">Check In</button>
+        <button class="btn-outline" id="actMarkClean">Mark Clean</button>
+        <button class="btn-outline" id="actDirty">Mark Dirty</button>
+        <button class="btn-outline" id="actOutOrder">Out of Order</button>
+        <button class="btn" id="actCheckout">Check Out → Dirty</button>
+        <button class="btn" id="saveRoom">Save</button>
+        <button class="btn-outline" value="cancel">Close</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Settings dialog -->
+  <dialog id="settingsDialog">
+    <form method="dialog" class="sheet" id="settingsForm">
+      <h2>Settings</h2>
+      <div class="grid">
+        <div class="full"><label>Hotel name</label><input id="s_hotel" value="Subari Hotel" /></div>
+        <div><label>Currency</label><input id="s_currency" value="IQD" /></div>
+        <div><label>Service %</label><input id="s_service" type="number" min="0" step="0.1" value="0" /></div>
+      </div>
+      <div class="section">
+        <h3>Team (Users)</h3>
+        <div class="small">Add members, set username, password, role, and permissions. Add housekeeping users with role <strong>housekeeping</strong> for phone/tablet access.</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div></div>
+          <button class="btn-outline" id="addMemberBtn">Add Member</button>
+        </div>
+        <div id="teamList" class="small" style="margin-top:8px"></div>
+      </div>
+      <div class="section">
+        <h3>Cloud Sync (optional)</h3>
+        <div class="grid">
+          <div class="full"><label>Sync Endpoint URL</label><input id="s_syncUrl" placeholder="https://script.google.com/... or https://your-api/rooms" /></div>
+          <div><button class="btn-outline" id="btnPush">Push to Cloud</button></div>
+          <div><button class="btn-outline" id="btnPull">Pull from Cloud</button></div>
+          <div><button class="btn-outline" id="btnBackup">Download Backup</button></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="saveSettings">Save</button>
+        <button class="btn-outline" value="cancel">Close</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Reports dialog -->
+  <dialog id="reportsDialog">
+    <div class="sheet">
+      <h2>Reports</h2>
+      <div class="grid">
+        <div><label>From</label><input id="r_from" type="date" /></div>
+        <div><label>To</label><input id="r_to" type="date" /></div>
+      </div>
+      <div id="reportContent" class="small" style="margin-top:8px"></div>
+      <div class="actions">
+        <button class="btn-outline" id="exportCSV">Export Guest Register CSV</button>
+        <button class="btn" id="closeReport">Close</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Housekeeping list (manager view) -->
+  <dialog id="hkDialog">
+    <div class="sheet">
+      <h2>Housekeeping List</h2>
+      <div id="hkContent" class="small"></div>
+      <div class="actions"><button class="btn" id="hkClose">Close</button></div>
+    </div>
+  </dialog>
+
+  <!-- My Tasks (housekeeping user view) -->
+  <dialog id="myTasksDialog">
+    <div class="sheet">
+      <h2>My Tasks</h2>
+      <div id="myTasksContent" class="small"></div>
+      <div class="actions"><button class="btn" id="myTasksClose">Close</button></div>
+    </div>
+  </dialog>
+
+  <!-- Calendar -->
+  <dialog id="calDialog">
+    <div class="sheet">
+      <h2>7‑Day Availability</h2>
+      <div id="calContent" class="small"></div>
+      <div class="actions"><button class="btn" id="calClose">Close</button></div>
+    </div>
+  </dialog>
+
+<script>
+// ======= Keys =======
+const settingsKey = "subari_settings_v5_4";
+const storeKey = "subari_rooms_v5_4";
+const auditKey = "subari_audit_v5_4";
+
+// ======= Defaults =======
+const DEFAULT_SETTINGS = {
+  hotel:"Subari Hotel",
+  currency:"IQD",
+  service:0,
+  syncUrl:"",
+  users:[
+    {username:"frontdesk", name:"Front Desk", password:"1111", role:"staff", perms:{rooms:true, payments:true, housekeeping:true, reports:false, settings:false, cloud:false, audit:false}},
+    {username:"manager", name:"Duty Manager", password:"2222", role:"manager", perms:{rooms:true, payments:true, housekeeping:true, reports:true, settings:true, cloud:true, audit:true}},
+    {username:"owner", name:"Owner", password:"0000", role:"owner", perms:{rooms:true, payments:true, housekeeping:true, reports:true, settings:true, cloud:true, audit:true}},
+    {username:"hk1", name:"HK-Ali", password:"1234", role:"housekeeping", perms:{rooms:false, payments:false, housekeeping:true, reports:false, settings:false, cloud:false, audit:false}}
+  ]
+};
+
+const Settings = {
+  load(){ try{return Object.assign({}, DEFAULT_SETTINGS, JSON.parse(localStorage.getItem(settingsKey)||"{}"))}catch{return DEFAULT_SETTINGS} },
+  save(s){ localStorage.setItem(settingsKey, JSON.stringify(s)); }
+};
+let settings = Settings.load();
+
+// ======= Rooms store =======
+const DEFAULT_ROOMS = [101,102,103,104,105,106,201,202,203,204,205,206,301,302,303,304,305,306];
+function newRoomState(n){
+  return {roomNumber:String(n),status:"gray",
+          guestName:"", persons:"", roomType:"Standard",
+          phone:"", car:"", entryDate:"", entryTime:"",
+          price:"", nights:"", paid:"unpaid",
+          deposit:"", finalPaid:"", payMethod:"cash", payRef:"",
+          extras:[], early:"", late:"",
+          cleaner:"", cleanedAt:"",
+          hkTasks:[], // [{username, name, done, ts}]
+          oorReason:"", oorEta:"",
+          notes:"", history:[]};
+}
+const Store = {
+  load(){
+    try{
+      const raw = localStorage.getItem(storeKey);
+      if(!raw) throw 0;
+      return JSON.parse(raw);
+    }catch(e){
+      const init = DEFAULT_ROOMS.map(newRoomState);
+      localStorage.setItem(storeKey, JSON.stringify(init)); 
+      return init;
+    }
+  },
+  save(d){ localStorage.setItem(storeKey, JSON.stringify(d)); },
+  export(){
+    const data = localStorage.getItem(storeKey)||"[]";
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([data],{type:'application/json'}));
+    a.download = 'subari_rooms.json'; a.click(); URL.revokeObjectURL(a.href);
+  },
+  backup(){
+    const obj = {settings, rooms: state, audit: Audit.load()};
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(obj)],{type:'application/json"}));
+    a.download = 'subari_backup_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); URL.revokeObjectURL(a.href);
+  }
+};
+let state = Store.load();
+
+// ======= Audit =======
+const Audit = {
+  load(){ try{return JSON.parse(localStorage.getItem(auditKey))||[]}catch{return []} },
+  save(a){ localStorage.setItem(auditKey, JSON.stringify(a)); },
+  push(entry){ const a=Audit.load(); a.push(entry); Audit.save(a); }
+};
+
+// ======= Session =======
+let currentUser = null; // {username,name,role,perms}
+function isSignedIn(){ return !!currentUser; }
+function can(action){
+  if(!currentUser) return false;
+  // hard gates by role
+  const roleGate = {
+    changeService: ["owner"],
+    checkout: ["manager","owner"],
+    viewAudit: ["manager","owner"],
+    openSettings: ["manager","owner"],
+    pushPull: ["manager","owner"]
+  };
+  for(const k in roleGate){ if(action===k && !roleGate[k].includes(currentUser.role)) return false; }
+  // member perms
+  const p = currentUser.perms||{};
+  const map = {
+    reserve: p.rooms, checkin: p.rooms, checkout: p.rooms,
+    markclean: p.housekeeping, dirty: p.housekeeping, out_of_order: p.housekeeping,
+    edit_payments: p.payments,
+    reports: p.reports, viewAudit: p.audit, openSettings: p.settings, pushPull: p.cloud
+  };
+  return map[action] !== undefined ? map[action] : true;
+}
+
+// ======= UI elements =======
+const board = document.getElementById("board");
+const search = document.getElementById("search");
+const filterSel = document.getElementById("filter");
+const roleTag = document.getElementById("roleTag");
+const userTag = document.getElementById("userTag");
+
+// ======= Helpers =======
+function num(x){ const n=Number(x); return isFinite(n)?n:0; }
+function currency(n){ return Number(n||0).toLocaleString() + " " + (settings.currency||""); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function nowHM(){ const d=new Date(); return String(d.getHours()).padStart(2,'0')+":"+String(d.getMinutes()).padStart(2,'0'); }
+function statusLabel(s){ return s==='green'?'In‑House':s==='yellow'?'Reserved':s==='red'?'Dirty':s==='purple'?'Out of Order':'Vacant'; }
+function arabicPaid(p){ return p==='paid'?'مدفوع':'غير مدفوع'; }
+
+function baseTotal(r){ return num(r.price)*num(r.nights); }
+function extrasTotal(r){ return (r.extras||[]).reduce((a,e)=>a+num(e.amount),0); }
+function computeTotal(r){ return Math.max(0, baseTotal(r)+extrasTotal(r)); }
+function computeWithService(r){ const t=computeTotal(r); const svc=Math.round(t*(Number(settings.service||0)/100)); return {sub:t, svc, grand:t+svc}; }
+function amountPaid(r){ return num(r.deposit)+num(r.finalPaid); }
+function balance(r){ const totals=computeWithService(r); return Math.max(0, totals.grand - amountPaid(r)); }
+
+function endDate(r){
+  if(!r.entryDate || !num(r.nights)) return "";
+  const d = new Date(r.entryDate+"T00:00:00");
+  d.setDate(d.getDate()+num(r.nights));
+  return d.toISOString().slice(0,10);
+}
+function isOverstay(r){
+  const e = endDate(r); if(!e) return false;
+  const today = todayISO();
+  return r.status==="green" && today > e;
+}
+function conflict(r){
+  if(!r.entryDate || !num(r.nights)) return false;
+  const start = r.entryDate;
+  const end = endDate(r);
+  return state.some(x=> x!==r && x.roomNumber===r.roomNumber && (x.status==="yellow"||x.status==="green") && x.entryDate && num(x.nights)>0 && !(end <= x.entryDate || endDate(x) <= start));
+}
+
+// ======= Render =======
+function render(){
+  document.title = (settings.hotel||"Subari Hotel") + " — Front Desk";
+  roleTag.textContent = currentUser ? currentUser.role.toUpperCase() : "";
+  userTag.textContent = currentUser ? ("@ "+currentUser.name) : "";
+  board.innerHTML = "";
+  const q=(search.value||"").toLowerCase().trim(); const f=filterSel.value;
+  state.slice().sort((a,b)=>Number(a.roomNumber)-Number(b.roomNumber))
+    .filter(r => (!q || r.roomNumber.includes(q) || (r.guestName||'').toLowerCase().includes(q)) && (f==='all' || r.status===f))
+    .forEach(r => {
+      const totals = computeWithService(r);
+      const card=document.createElement('div'); card.className='room';
+      const badge=document.createElement('div'); badge.className='badge status-'+r.status; badge.textContent=statusLabel(r.status); card.appendChild(badge);
+      const rn=document.createElement('div'); rn.className='roomnum'; rn.textContent=r.roomNumber; card.appendChild(rn);
+      const nm=document.createElement('div'); nm.className='name'; nm.textContent=r.guestName||'—'; card.appendChild(nm);
+      const mut=document.createElement('div'); mut.className='muted';
+      const parts=[]; if(r.entryDate) parts.push(r.entryDate+" → "+(endDate(r)||"?")); if(r.nights) parts.push(r.nights+' nights'); mut.textContent=parts.join(' • ');
+      card.appendChild(mut);
+      const sub=document.createElement('div'); sub.className='subline'; if(num(r.price)&&num(r.nights)) sub.textContent=`${Number(r.price).toLocaleString()} × ${r.nights}`; card.appendChild(sub);
+      const left=document.createElement('div'); left.className='left-ar'; left.textContent=arabicPaid(r.paid); card.appendChild(left);
+      const right=document.createElement('div'); right.className='right-price'; right.textContent= totals.grand?currency(totals.grand):(num(r.price)?currency(r.price):""); card.appendChild(right);
+
+      // HK badges
+      if (r.hkTasks && r.hkTasks.length) {
+        const done = r.hkTasks.filter(t=>t.done).map(t=>t.name);
+        const pend = r.hkTasks.filter(t=>!t.done).map(t=>t.name);
+        const div = document.createElement('div'); div.style.marginTop = '4px';
+        div.innerHTML = (done.length?('<span class="hkchip">Done: '+done.join(', ')+'</span>'):'') +
+                        (pend.length?('<span class="hkpend">Pending: '+pend.join(', ')+'</span>'):'') ;
+        card.appendChild(div);
+      }
+
+      if(isOverstay(r)){ const w=document.createElement('div'); w.className='warn'; w.textContent="Overstay! Checkout date passed."; w.style.position='absolute'; w.style.left='10px'; w.style.top='10px'; w.style.right='80px'; card.appendChild(w); }
+      card.addEventListener('click',()=>openDialog(r.roomNumber)); board.appendChild(card);
+    });
+
+  // Simplify toolbar for housekeeping role
+  const hk = currentUser && currentUser.role === 'housekeeping';
+  ['calendarBtn','reportsBtn','auditBtn','settingsBtn','exportBtn'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display = hk ? 'none' : ''; });
+}
+
+// ======= Login =======
+const loginDlg = document.getElementById("loginDialog");
+document.getElementById("loginOk").addEventListener("click",(e)=>{
+  e.preventDefault();
+  const u = (document.getElementById("loginUser").value||"").trim();
+  const p = (document.getElementById("loginPass").value||"").trim();
+  const match = (settings.users||[]).find(x=>x.username===u && x.password===p);
+  if(!match){ alert("Wrong username or password."); return; }
+  currentUser = JSON.parse(JSON.stringify(match));
+  loginDlg.close(); document.getElementById('loginOverlay').style.display='none'; render(); updateSignedToolbar(); updateSignedToolbar();
+});
+
+// ======= Room Dialog and actions =======
+const dlg = document.getElementById("roomDialog");
+const el = {
+  guestName: document.getElementById("f_guest"),
+  persons: document.getElementById("f_persons"),
+  roomType: document.getElementById("f_roomType"),
+  phone: document.getElementById("f_phone"),
+  car: document.getElementById("f_car"),
+  entryDate: document.getElementById("f_entryDate"),
+  entryTime: document.getElementById("f_entryTime"),
+  price: document.getElementById("f_price"),
+  nights: document.getElementById("f_nights"),
+  paid: document.getElementById("f_paid"),
+  deposit: document.getElementById("f_deposit"),
+  finalPaid: document.getElementById("f_finalPaid"),
+  payMethod: document.getElementById("f_payMethod"),
+  payRef: document.getElementById("f_payRef"),
+  extrasContainer: document.getElementById("extrasContainer"),
+  early: document.getElementById("f_early"),
+  late: document.getElementById("f_late"),
+  cleaner: document.getElementById("f_cleaner"),
+  cleanedAt: document.getElementById("f_cleanedAt"),
+  hkAssign: document.getElementById("f_hkAssign"),
+  hkTaskBadges: document.getElementById("hkTaskBadges"),
+  oorReason: document.getElementById("f_oorReason"),
+  oorEta: document.getElementById("f_oorEta"),
+  notes: document.getElementById("f_notes"),
+  incNight: document.getElementById("incNight"),
+  decNight: document.getElementById("decNight")
+};
+const dlgRoomNum = document.getElementById("dlgRoomNum");
+const liveTotal = document.getElementById("liveTotal");
+const liveBalance = document.getElementById("liveBalance");
+const warnConflict = document.getElementById("warnConflict");
+let currentRoom = null;
+
+function getRoom(num){ return state.find(r=>r.roomNumber===String(num)); }
+
+function makeExtraRow(name="", amount=""){
+  const row = document.createElement('div');
+  row.style.display='flex'; row.style.gap='6px'; row.style.margin='4px 0';
+  row.innerHTML = `<input placeholder="Extra name" value="${name}"/><input type="number" min="0" step="500" placeholder="IQD" value="${amount}"/><button type="button" class="btn-outline">✕</button>`;
+  const [nameEl, amountEl, delBtn] = row.children;
+  delBtn.addEventListener('click', ()=> row.remove());
+  return row;
+}
+document.getElementById("addExtra").addEventListener("click", ()=> el.extrasContainer.appendChild(makeExtraRow()));
+
+["input","change"].forEach(ev=>[el.price,el.nights,el.deposit,el.finalPaid].forEach(x=>x.addEventListener(ev,updateLive)));
+el.incNight.addEventListener("click", ()=>{ el.nights.value = String((Number(el.nights.value)||1)+1); updateLive(); });
+el.decNight.addEventListener("click", ()=>{ const v=(Number(el.nights.value)||1)-1; el.nights.value = String(v<1?1:v); updateLive(); });
+
+function readExtras(){
+  const arr = [];
+  el.extrasContainer.querySelectorAll('div').forEach(row=>{
+    const [nameEl, amountEl] = row.children;
+    const name = nameEl.value.trim();
+    const amount = amountEl.value;
+    if(name && Number(amount)>0) arr.push({name, amount});
+  });
+  return arr;
+}
+function fillExtras(extras){
+  el.extrasContainer.innerHTML="";
+  (extras||[]).forEach(e=> el.extrasContainer.appendChild(makeExtraRow(e.name, e.amount)));
+}
+function updateLive(){
+  const dummy = {
+    price: el.price.value,
+    nights: el.nights.value,
+    extras: readExtras(),
+    deposit: el.deposit.value,
+    finalPaid: el.finalPaid.value
+  };
+  const t = Number(dummy.price||0)*Number(dummy.nights||0) + readExtras().reduce((a,e)=>a+Number(e.amount||0),0);
+  const svc = Math.round(t*(Number(settings.service||0)/100));
+  const grand = t + svc;
+  const paid = Number(dummy.deposit||0)+Number(dummy.finalPaid||0);
+  liveTotal.textContent = (grand||0).toLocaleString() + " " + (settings.currency||"");
+  liveBalance.textContent = Math.max(0, grand - paid).toLocaleString() + " " + (settings.currency||"");
+}
+
+// fill housekeeping assign options
+function fillHKAssign(selectedUsernames){
+  const hkUsers = (settings.users||[]).filter(u=>u.role==='housekeeping');
+  el.hkAssign.innerHTML = hkUsers.map(u=>`<option value="${u.username}" ${selectedUsernames.includes(u.username)?'selected':''}>${u.name} (${u.username})</option>`).join('');
+}
+
+function updateHKBadges(r){
+  if(!(r.hkTasks && r.hkTasks.length)){ el.hkTaskBadges.innerHTML = "<span class='small'>No housekeeping assigned.</span>"; return; }
+  const done = r.hkTasks.filter(t=>t.done).map(t=>t.name);
+  const pend = r.hkTasks.filter(t=>!t.done).map(t=>t.name);
+  el.hkTaskBadges.innerHTML = (done.length?('<span class="hkchip">Done: '+done.join(', ')+'</span>'):'') +
+                              (pend.length?('<span class="hkpend">Pending: '+pend.join(', ')+'</span>'):'') ;
+}
+
+function fillForm(r){
+  dlgRoomNum.textContent=r.roomNumber;
+  for(const k of ["guestName","persons","roomType","phone","car","entryDate","entryTime","price","nights","paid","deposit","finalPaid","payMethod","payRef","early","late","cleaner","cleanedAt","oorReason","oorEta","notes"]){
+    el[k].value = r[k]||"";
+  }
+  fillExtras(r.extras||[]);
+  const selected = (r.hkTasks||[]).map(t=>t.username);
+  fillHKAssign(selected);
+  updateHKBadges(r);
+  updateLive();
+  warnConflict.style.display = (conflict(r) || isOverstay(r)) ? "block" : "none";
+}
+function readForm(r){
+  for(const k of ["guestName","persons","roomType","phone","car","entryDate","entryTime","price","nights","paid","deposit","finalPaid","payMethod","payRef","early","late","cleaner","cleanedAt","oorReason","oorEta","notes"]){
+    r[k] = el[k].value;
+  }
+  r.extras = readExtras();
+  // housekeeping assignments (manager/owner only can change)
+  if(currentUser && (currentUser.role==='manager' || currentUser.role==='owner')){
+    const sel = Array.from(el.hkAssign.selectedOptions).map(o=>o.value);
+    const hkUsers = (settings.users||[]).filter(u=>u.role==='housekeeping' && sel.includes(u.username));
+    // rebuild hkTasks preserving done status where usernames match
+    const old = r.hkTasks||[];
+    r.hkTasks = hkUsers.map(u=>{
+      const prev = old.find(x=>x.username===u.username);
+      return prev ? prev : {username:u.username, name:u.name, done:false, ts:""};
+    });
+  }
+}
+
+function openDialog(num){ currentRoom=getRoom(num); fillForm(currentRoom); dlg.showModal(); }
+
+function pushHistory(r, action){ r.history.push({ts:new Date().toISOString(), action, status:r.status, role:currentUser.role, by:currentUser.name, guest:r.guestName}); Audit.push({ts:new Date().toISOString(), action, room:r.roomNumber, role:currentUser.role, by:currentUser.name}); }
+
+// housekeeping auto-clean when all tasks done
+function maybeAutoClean(r){
+  if(r.status==='red' && r.hkTasks && r.hkTasks.length && r.hkTasks.every(t=>t.done)){
+    r.status='gray';
+    r.cleanedAt = new Date().toISOString().slice(0,16);
+    pushHistory(r,'auto-clean');
+    Store.save(state); render(); updateSignedToolbar();
+  }
+}
+
+document.getElementById("actReserve").addEventListener("click",(e)=>{e.preventDefault(); if(!currentRoom) return; if(!can('reserve')) return alert("No permission."); readForm(currentRoom); currentRoom.status='yellow'; if(!currentRoom.entryDate) currentRoom.entryDate=todayISO(); Store.save(state); render(); updateSignedToolbar(); pushHistory(currentRoom,'reserve');});
+document.getElementById("actCheckIn").addEventListener("click",(e)=>{e.preventDefault(); if(!currentRoom) return; if(!can('checkin')) return alert("No permission."); readForm(currentRoom); currentRoom.status='green'; if(!currentRoom.entryDate) currentRoom.entryDate=todayISO(); if(!currentRoom.entryTime) currentRoom.entryTime=nowHM(); Store.save(state); render(); updateSignedToolbar(); pushHistory(currentRoom,'checkin');});
+document.getElementById("actDirty").addEventListener("click",(e)=>{e.preventDefault(); if(!currentRoom) return; if(!can('dirty')) return alert("No permission."); readForm(currentRoom); currentRoom.status='red'; Store.save(state); render(); updateSignedToolbar(); pushHistory(currentRoom,'dirty');});
+document.getElementById("actOutOrder").addEventListener("click",(e)=>{e.preventDefault(); if(!currentRoom) return; if(!can('out_of_order')) return alert("No permission."); readForm(currentRoom); currentRoom.status='purple'; Store.save(state); render(); updateSignedToolbar(); pushHistory(currentRoom,'out_of_order');});
+document.getElementById("actMarkClean").addEventListener("click",(e)=>{e.preventDefault(); if(!currentRoom) return; if(!can('markclean')) return alert("No permission."); readForm(currentRoom);
+  // manager override: mark all tasks done and clean now
+  if(currentUser.role==='manager' || currentUser.role==='owner'){
+    (currentRoom.hkTasks||[]).forEach(t=>{ t.done=true; t.ts=new Date().toISOString(); });
+    currentRoom.status='gray';
+    currentRoom.cleanedAt = new Date().toISOString().slice(0,16);
+    pushHistory(currentRoom,'manager-clean');
+  } else {
+    // staff/housekeeping shouldn't use this; block
+    return alert("Only Manager/Owner can force mark clean. Use My Tasks to complete your part.");
+  }
+  Store.save(state); render(); updateSignedToolbar(); fillForm(currentRoom);
+});
+
+document.getElementById("actCheckout").addEventListener("click",(e)=>{
+  e.preventDefault(); if(!currentRoom) return;
+  if(!(can('checkout'))) return alert("Checkout requires Manager/Owner and permission.");
+  readForm(currentRoom); currentRoom.status='red'; pushHistory(currentRoom,'checkout');
+  // reset hk tasks to not done when turning dirty
+  (currentRoom.hkTasks||[]).forEach(t=>{ t.done=false; t.ts=""; });
+  Store.save(state); render(); updateSignedToolbar();
+});
+
+document.getElementById("saveRoom").addEventListener("click",(e)=>{e.preventDefault(); if(!currentRoom) return; readForm(currentRoom); Store.save(state); render(); updateSignedToolbar(); dlg.close();});
+
+// ======= Registration Card & Invoice =======
+document.getElementById("btnRegCard").addEventListener("click",(e)=>{
+  e.preventDefault(); if(!currentRoom) return; readForm(currentRoom);
+  const r=currentRoom;
+  const win=window.open("","_blank");
+  win.document.write(`<!DOCTYPE html><html><head><meta charset='utf-8'><title>Registration — Room ${r.roomNumber}</title>
+  <style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;margin:24px;color:#2d3436}h1{margin:0 0 8px}
+  /* Inline login fallback */
+  #loginOverlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:20}
+  #loginCard{background:#fff;padding:16px;border-radius:16px;box-shadow:0 12px 48px rgba(0,0,0,.2);width:min(420px,92vw)}
+  #loginCard h2{margin:0 0 8px}
+  #loginCard .grid{grid-template-columns:1fr}
+</style></head><body>
+  <h1>${settings.hotel || "Subari Hotel"} — Registration Card</h1>
+  <div>Guest: ${r.guestName||'-'}</div>
+  <div>Room: ${r.roomNumber} • Persons: ${r.persons||'-'} • Room type: ${r.roomType||'-'}</div>
+  <div>Phone: ${r.phone||'-'} • Car: ${r.car||'-'}</div>
+  <div>Entry: ${r.entryDate||'-'} ${r.entryTime||''} • Nights: ${r.nights||'-'} • Early: ${r.early||'-'} • Late: ${r.late||'-'}</div>
+  <div style="margin-top:16px;border-top:1px dashed #ccc;padding-top:10px">Signature: __________________________</div>
+  <button onclick="window.print()" style="margin-top:12px">Print</button>
+  </body></html>`);
+  win.document.close();
+});
+
+document.getElementById("btnInvoice").addEventListener("click",(e)=>{
+  e.preventDefault(); if(!currentRoom) return; readForm(currentRoom);
+  const r=currentRoom;
+  const t = Number(r.price||0)*Number(r.nights||0) + (r.extras||[]).reduce((a,e)=>a+Number(e.amount||0),0);
+  const svc = Math.round(t*(Number(settings.service||0)/100)); const grand=t+svc;
+  const paid = Number(r.deposit||0)+Number(r.finalPaid||0);
+  const extras = (r.extras||[]).filter(e=>Number(e.amount)>0);
+  const lang = confirm("OK = English invoice, Cancel = Arabic");
+  const labels = lang ? {invoice:"Invoice", desc:"Description", rate:"Rate", qty:"Qty", total:"Total", subtotal:"Subtotal", service:"Service", grand:"Grand Total", paid:"Amount Paid", balance:"Balance Due", method:"Method", paidLabel:"Arabic Paid label"} :
+                        {invoice:"فاتورة", desc:"الوصف", rate:"السعر", qty:"الكمية", total:"المجموع", subtotal:"الإجمالي", service:"الخدمة", grand:"الإجمالي الكلي", paid:"المبلغ المدفوع", balance:"المبلغ المتبقي", method:"طريقة الدفع", paidLabel:"حالة الدفع بالعربية"};
+  const win=window.open("","_blank");
+  win.document.write(`<!DOCTYPE html><html><head><meta charset='utf-8'><title>${labels.invoice} — Room ${r.roomNumber}</title>
+  <style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;margin:24px;color:#2d3436}h1{font-size:22px;margin:0 0 6px}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #e0e0e0;padding:8px;text-align:left;font-size:14px}tfoot td{font-weight:800}.right{text-align:right}.muted{color:#666;font-size:12px}.ar{font-weight:800}
+  /* Inline login fallback */
+  #loginOverlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:20}
+  #loginCard{background:#fff;padding:16px;border-radius:16px;box-shadow:0 12px 48px rgba(0,0,0,.2);width:min(420px,92vw)}
+  #loginCard h2{margin:0 0 8px}
+  #loginCard .grid{grid-template-columns:1fr}
+</style></head><body>
+  <h1>${settings.hotel || "Subari Hotel"}</h1>
+  <div class="muted">Date: ${new Date().toLocaleString()}</div>
+  <div><strong>Guest:</strong> ${r.guestName||'-'} • <strong>Room:</strong> ${r.roomNumber} • <strong>Persons:</strong> ${r.persons||'-'}</div>
+  <table><thead><tr><th>${labels.desc}</th><th class="right">${labels.rate} (${settings.currency})</th><th class="right">${labels.qty}</th><th class="right">${labels.total} (${settings.currency})</th></tr></thead><tbody>
+    <tr><td>Room ${r.roomNumber}</td><td class="right">${Number(r.price||0).toLocaleString()}</td><td class="right">${Number(r.nights||0)}</td><td class="right">${Number((r.price||0)*(r.nights||0)).toLocaleString()}</td></tr>
+    ${extras.map(e=>`<tr><td>${e.name}</td><td class="right">—</td><td class="right">1</td><td class="right">${Number(e.amount||0).toLocaleString()}</td></tr>`).join('')}
+  </tbody><tfoot>
+    <tr><td colspan="3" class="right">${labels.subtotal}</td><td class="right">${Number(t).toLocaleString()}</td></tr>
+    <tr><td colspan="3" class="right">${labels.service} (${settings.service}%)</td><td class="right">${Number(svc).toLocaleString()}</td></tr>
+    <tr><td colspan="3" class="right">${labels.grand}</td><td class="right">${Number(grand).toLocaleString()}</td></tr>
+    <tr><td colspan="3" class="right">${labels.paid} (${r.payMethod}${r.payRef?(" / "+r.payRef):""})</td><td class="right">${Number(paid).toLocaleString()}</td></tr>
+    <tr><td colspan="3" class="right">${labels.balance}</td><td class="right">${Number(Math.max(0, grand - paid)).toLocaleString()}</td></tr>
+  </tfoot></table>
+  <div style="margin-top:10px"><strong>${labels.paidLabel}:</strong> <span class="ar">${r.paid==='paid'?'مدفوع':'غير مدفوع'}</span></div>
+  <button onclick="window.print()" style="margin-top:12px">Print</button>
+  </body></html>`);
+  win.document.close();
+});
+
+// ======= Reports =======
+const reportsDialog = document.getElementById("reportsDialog");
+const reportContent = document.getElementById("reportContent");
+document.getElementById("reportsBtn").addEventListener("click", ()=>{
+  if(!can('reports')) return alert("No permission to open reports.");
+  buildReport(); reportsDialog.showModal();
+});
+document.getElementById("closeReport").addEventListener("click", ()=>reportsDialog.close());
+document.getElementById("exportCSV").addEventListener("click", ()=>{
+  const from = document.getElementById("r_from").value||"0000-01-01";
+  const to = document.getElementById("r_to").value||"9999-12-31";
+  const rows=[['date','room','guest','status','nights','rate','extras','grand','deposit','final','paidMethod','ref','hk_pending']];
+  state.forEach(r=>{
+    if(!r.entryDate) return;
+    if(r.entryDate<from || r.entryDate>to) return;
+    const t = Number(r.price||0)*Number(r.nights||0) + (r.extras||[]).reduce((a,e)=>a+Number(e.amount||0),0);
+    const svc = Math.round(t*(Number(settings.service||0)/100)); const grand=t+svc;
+    const pend = (r.hkTasks||[]).filter(t=>!t.done).map(t=>t.name).join(';');
+    rows.push([r.entryDate,r.roomNumber,r.guestName,r.status,r.nights,r.price,(r.extras||[]).reduce((a,e)=>a+Number(e.amount||0),0),grand,r.deposit,r.finalPaid,r.payMethod,r.payRef,pend]);
+  });
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='guest_register.csv'; a.click(); URL.revokeObjectURL(a.href);
+});
+
+function buildReport(){
+  const today = todayISO();
+  const totals = {cash:0, card:0, bank:0};
+  let revenue=0, occupied=0, rooms=state.length;
+  state.forEach(r=>{
+    const t = Number(r.price||0)*Number(r.nights||0) + (r.extras||[]).reduce((a,e)=>a+Number(e.amount||0),0);
+    const svc = Math.round(t*(Number(settings.service||0)/100));
+    const grand = t + svc;
+    if(r.status==='green') occupied++;
+    const paid = Number(r.deposit||0)+Number(r.finalPaid||0);
+    if(paid>0) totals[r.payMethod||'cash'] += paid;
+    revenue += grand;
+  });
+  const occRate = rooms? Math.round((occupied/rooms)*100):0;
+  const html = `
+    <div><strong>Date:</strong> ${today}</div>
+    <div><strong>Rooms:</strong> ${rooms} • <strong>Occupied:</strong> ${occupied} • <strong>Occupancy:</strong> ${occRate}%</div>
+    <div><strong>Revenue (Grand Totals):</strong> ${currency(revenue)}</div>
+  `;
+  reportContent.innerHTML = html;
+}
+
+// ======= Housekeeping (manager view) =======
+const hkDialog = document.getElementById("hkDialog");
+const hkContent = document.getElementById("hkContent");
+document.getElementById("hkListBtn").addEventListener("click", ()=>{ buildHK(); hkDialog.showModal(); });
+document.getElementById("hkClose").addEventListener("click", ()=>hkDialog.close());
+function buildHK(){
+  const needing = state.filter(r=> r.status==='red' || r.status==='purple');
+  hkContent.innerHTML = needing.map(r=>{
+    const pend = (r.hkTasks||[]).filter(t=>!t.done).map(t=>t.name);
+    const done = (r.hkTasks||[]).filter(t=>t.done).map(t=>t.name);
+    return `<div>Room <strong>${r.roomNumber}</strong> — ${statusLabel(r.status)} ${r.oorReason?('• '+r.oorReason):''}<br/>
+      ${done.length?('<span class="hkchip">Done: '+done.join(', ')+'</span>'):''}
+      ${pend.length?('<span class="hkpend">Pending: '+pend.join(', ')+'</span>'):'<span class="hkchip">All done</span>'}
+    </div>`;
+  }).join('') || "All clean.";
+}
+
+// ======= My Tasks (housekeeping user) =======
+const myDlg = document.getElementById("myTasksDialog");
+const myContent = document.getElementById("myTasksContent");
+document.getElementById("myTasksBtn").addEventListener("click", ()=>{
+  if(!(currentUser && currentUser.role==='housekeeping')) return alert("My Tasks is for housekeeping users.");
+  buildMyTasks(); myDlg.showModal();
+});
+document.getElementById("myTasksClose").addEventListener("click", ()=>myDlg.close());
+
+function buildMyTasks(){
+  const me = currentUser.username;
+  const tasks = [];
+  state.forEach(r=>{
+    (r.hkTasks||[]).forEach(t=>{
+      if(t.username===me){
+        tasks.push({room:r, task:t});
+      }
+    });
+  });
+  if(!tasks.length){ myContent.innerHTML = "No tasks for you right now."; return; }
+  myContent.innerHTML = tasks.map((x,idx)=>{
+    const r=x.room, t=x.task;
+    const btn = t.done? `<span class="hkchip">Done at ${t.ts.slice(0,16)}</span>` :
+      `<button class="btn" data-idx="${idx}" data-room="${r.roomNumber}">Mark as Cleaned</button>`;
+    return `<div style="border:1px solid #e5e7eb;border-radius:10px;padding:8px;margin:6px 0">
+      <div><strong>Room ${r.roomNumber}</strong> — ${statusLabel(r.status)}</div>
+      <div class="small">Guest: ${r.guestName||'-'} • Notes: ${r.notes||'-'}</div>
+      <div style="margin-top:6px">${btn}</div>
+    </div>`;
+  }).join('');
+
+  // attach handlers
+  myContent.querySelectorAll('button[data-idx]').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const idx = Number(e.target.dataset.idx);
+      const roomNo = e.target.dataset.room;
+      const r = state.find(rr=>rr.roomNumber===roomNo);
+      if(!r) return;
+      const t = (r.hkTasks||[]).find(tt=>tt.username===currentUser.username);
+      if(!t) return;
+      t.done = true;
+      t.ts = new Date().toISOString();
+      pushHistory(r, 'hk-done:'+currentUser.username);
+      Store.save(state);
+      maybeAutoClean(r);
+      buildMyTasks();
+      render(); updateSignedToolbar();
+    });
+  });
+}
+
+// ======= Settings / Team =======
+const sDlg = document.getElementById("settingsDialog");
+const teamList = document.getElementById("teamList");
+
+function renderTeam(){
+  const users = settings.users||[];
+  if(!users.length){ teamList.innerHTML = "No members yet."; return; }
+  teamList.innerHTML = users.map((u,i)=>{
+    const P = u.perms||{};
+    function cb(name, label){ return `<label class="permchip"><input type="checkbox" data-idx="${i}" data-perm="${name}" ${P[name]?'checked':''}/> ${label}</label>`; }
+    return `<div style="border:1px solid #e5e7eb;border-radius:10px;padding:8px;margin:6px 0">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input value="${u.username}" data-idx="${i}" class="member-username" placeholder="username" style="min-width:140px"/>
+        <input value="${u.name}" data-idx="${i}" class="member-name" placeholder="display name" style="min-width:160px"/>
+        <input value="${u.password}" data-idx="${i}" class="member-pass" placeholder="password" style="min-width:120px"/>
+        <select data-idx="${i}" class="member-role">
+          <option value="staff" ${u.role==='staff'?'selected':''}>Staff</option>
+          <option value="manager" ${u.role==='manager'?'selected':''}>Manager</option>
+          <option value="owner" ${u.role==='owner'?'selected':''}>Owner</option>
+          <option value="housekeeping" ${u.role==='housekeeping'?'selected':''}>Housekeeping</option>
+        </select>
+        <button class="btn-outline delMember" data-idx="${i}">Delete</button>
+      </div>
+      <div style="margin-top:6px">
+        ${cb('rooms','Rooms')}
+        ${cb('payments','Payments')}
+        ${cb('housekeeping','Housekeeping')}
+        ${cb('reports','Reports')}
+        ${cb('settings','Settings')}
+        ${cb('cloud','Cloud Sync')}
+        ${cb('audit','Audit Log')}
+      </div>
+    </div>`;
+  }).join('');
+  // attach handlers
+  teamList.querySelectorAll('.member-username').forEach(inp=> inp.addEventListener('input', e=>{ const i=Number(e.target.dataset.idx); settings.users[i].username=e.target.value.trim(); }));
+  teamList.querySelectorAll('.member-name').forEach(inp=> inp.addEventListener('input', e=>{ const i=Number(e.target.dataset.idx); settings.users[i].name=e.target.value; }));
+  teamList.querySelectorAll('.member-pass').forEach(inp=> inp.addEventListener('input', e=>{ const i=Number(e.target.dataset.idx); settings.users[i].password=e.target.value; }));
+  teamList.querySelectorAll('.member-role').forEach(sel=> sel.addEventListener('change', e=>{ const i=Number(e.target.dataset.idx); settings.users[i].role=e.target.value; }));
+  teamList.querySelectorAll('input[type="checkbox"]').forEach(cb=> cb.addEventListener('change', e=>{ const i=Number(e.target.dataset.idx); const p=e.target.dataset.perm; settings.users[i].perms[p]=e.target.checked; }));
+  teamList.querySelectorAll('.delMember').forEach(btn=> btn.addEventListener('click', e=>{ const i=Number(e.target.dataset.idx); const removed = settings.users.splice(i,1)[0];
+    // also remove from any room hkTasks if a housekeeping user is deleted
+    state.forEach(r=>{ r.hkTasks = (r.hkTasks||[]).filter(t=>t.username !== removed.username); });
+    renderTeam(); Store.save(state);
+  }));
+}
+
+document.getElementById("addMemberBtn").addEventListener("click", (e)=>{
+  e.preventDefault();
+  if(!(currentUser && (currentUser.role==="manager"||currentUser.role==="owner"))) return alert("Only Manager/Owner can add members.");
+  (settings.users||(settings.users=[])).push({username:"hk"+(settings.users.length+1), name:"HK-New", password:"1234", role:"housekeeping", perms:{rooms:false, payments:false, housekeeping:true, reports:false, settings:false, cloud:false, audit:false}});
+  renderTeam();
+});
+
+document.getElementById("settingsBtn").addEventListener("click", ()=>{
+  if(!(currentUser && (currentUser.role==="manager"||currentUser.role==="owner"))) return alert("Managers or Owner only.");
+  document.getElementById("s_hotel").value=settings.hotel||"Subari Hotel";
+  document.getElementById("s_currency").value=settings.currency||"IQD";
+  document.getElementById("s_service").value=settings.service||0;
+  renderTeam();
+  try{ sDlg.showModal(); } catch(e){ alert("Tap the page once, then open Settings again."); }
+});
+
+document.getElementById("saveSettings").addEventListener("click",(e)=>{
+  e.preventDefault();
+  // Only Owner can change Service %
+  if(currentUser.role!=="owner"){
+    const val = Number(document.getElementById("s_service").value||0);
+    if(val !== settings.service){ alert("Only Owner can change Service %."); return; }
+  }
+  settings.hotel=document.getElementById("s_hotel").value||"Subari Hotel";
+  settings.currency=document.getElementById("s_currency").value||"IQD";
+  settings.service=Number(document.getElementById("s_service").value||0);
+  Settings.save(settings); sDlg.close(); render(); updateSignedToolbar();
+});
+
+// Cloud buttons
+document.getElementById("btnPush").addEventListener("click",(e)=>{
+  e.preventDefault();
+  if(!(currentUser && (currentUser.role==="manager"||currentUser.role==="owner"))) return alert("Managers or Owner only.");
+  const url=settings.syncUrl; if(!url) return alert("Set Sync Endpoint URL first");
+  fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rooms:state,settings})}).then(r=>r.text()).then(()=>alert('Pushed!')).catch(err=>alert('Push failed: '+err));
+});
+document.getElementById("btnPull").addEventListener("click",(e)=>{
+  e.preventDefault();
+  if(!(currentUser && (currentUser.role==="manager"||currentUser.role==="owner"))) return alert("Managers or Owner only.");
+  const url=settings.syncUrl; if(!url) return alert("Set Sync Endpoint URL first");
+  fetch(url).then(r=>r.json()).then(data=>{ if(data.rooms){ state=data.rooms; Store.save(state); render(); updateSignedToolbar(); alert('Pulled!'); } else alert('Invalid data'); }).catch(err=>alert('Pull failed: '+err));
+});
+document.getElementById("btnBackup").addEventListener("click",(e)=>{ e.preventDefault(); Store.backup(); });
+
+// Top toolbar
+document.getElementById("exportBtn").addEventListener("click",()=>Store.export());
+document.getElementById("importFile").addEventListener("change",async (e)=>{ const f=e.target.files[0]; if(!f) return; const txt=await f.text(); try{ state=JSON.parse(txt); Store.save(state); render(); updateSignedToolbar(); }catch{ alert("Invalid JSON"); } e.target.value=""; });
+
+// Audit Log viewer
+const auditBtn = document.getElementById("auditBtn");
+auditBtn.addEventListener("click", ()=>{
+  if(!can('viewAudit')) return alert("No permission to view audit log.");
+  const a = Audit.load();
+  const win = window.open("","_blank");
+  win.document.write("<pre>"+a.map(x=>`${x.ts}  [${x.role}/${x.by}]  Room ${x.room}  ${x.action}`).join("\n")+"</pre>");
+  win.document.close();
+});
+
+// Sign out
+document.getElementById("signoutBtn").addEventListener("click", ()=>{
+  currentUser = null;
+  try{ loginDlg.showModal(); }catch(e){}
+  document.getElementById('loginOverlay').style.display='flex';
+  render(); updateSignedToolbar(); updateSignedToolbar();
+});
+
+// Emergency reset via #reset
+if (location.hash === "#reset") {
+  try {
+    localStorage.removeItem(settingsKey);
+    localStorage.removeItem(storeKey);
+    localStorage.removeItem(auditKey);
+    alert("Local data cleared. Reloading now.");
+    location.hash = "";
+    location.reload();
+  } catch(e) { alert("Reset failed: " + e); }
+}
+
+
+// Helpers to open login UI robustly
+function openLogin(){
+  // Try dialog first
+  try{
+    const d = document.getElementById("loginDialog");
+    if (typeof d.showModal === 'function') {
+      d.showModal();
+      // Also show overlay as a backup if still not signed in after 300ms
+      setTimeout(()=>{ if(!isSignedIn()){ document.getElementById('loginOverlay').style.display='flex'; } }, 300);
+    } else {
+      document.getElementById('loginOverlay').style.display='flex';
+    }
+  } catch(e){
+    document.getElementById('loginOverlay').style.display='flex';
+  }
+}
+
+function closeLogin(){
+  try{ document.getElementById('loginDialog').close(); }catch{}
+  document.getElementById('loginOverlay').style.display='none';
+}
+
+document.getElementById('forceLoginBtn').addEventListener('click', openLogin);
+document.getElementById('olEnter').addEventListener('click', ()=>{
+  const u = (document.getElementById('olUser').value||'').trim();
+  const p = (document.getElementById('olPass').value||'').trim();
+  const match = (settings.users||[]).find(x=>x.username===u && x.password===p);
+  if(!match){ alert('Wrong username or password.'); return; }
+  currentUser = JSON.parse(JSON.stringify(match));
+  closeLogin(); render(); updateSignedToolbar();
+});
+
+// Visibility of "Not signed in" toolbar
+const notSignedToolbar = document.getElementById('notSignedToolbar');
+function updateSignedToolbar(){ notSignedToolbar.style.display = isSignedIn() ? 'none' : 'flex'; }
+
+// Hard reset: clear caches + unregister SW
+async function hardReset(){
+  try{
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+    localStorage.removeItem(settingsKey);
+    localStorage.removeItem(storeKey);
+    localStorage.removeItem(auditKey);
+    alert('Hard reset done. The app will reload.');
+    location.hash = '';
+    location.reload();
+  }catch(e){
+    alert('Hard reset failed: ' + e);
+  }
+}
+
+// Start
+window.addEventListener('load', ()=>{
+
+  render(); updateSignedToolbar();
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=5.4.2');
+  // Always show login first
+  try{openLogin();}catch(e){ document.getElementById('loginOverlay').style.display='flex'; }
+});
+</script>
+</body>
+</html>
