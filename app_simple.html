@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Subari Hotel — Front Desk (Simple)</title>
+<style>
+  :root{ --green:#22c55e; --yellow:#facc15; --red:#ef4444; --gray:#9ca3af; --border:#e5e7eb; }
+  *{box-sizing:border-box} body{margin:0;background:#fff;color:#222;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Noto Sans,sans-serif}
+  header{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  h2{margin:0}
+  .legend{display:flex;gap:12px;font-size:13px;color:#555}
+  .chip{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:10px;height:10px;border-radius:3px;display:inline-block}
+  .sp{flex:1}
+  .btn{padding:10px 14px;border-radius:10px;border:0;background:#111;color:#fff;cursor:pointer;font-weight:800}
+  .btn-outline{padding:10px 14px;border-radius:10px;background:#fff;border:1px solid var(--border);color:#111;cursor:pointer}
+  .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--border)}
+  .bar input{padding:10px;border-radius:10px;border:1px solid var(--border);min-width:260px}
+  .wrap{display:grid;justify-content:center;padding:16px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;max-width:1200px}
+  .card{background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.05);padding:12px;display:flex;flex-direction:column;gap:8px;min-height:150px}
+  .stripe{height:6px;border-radius:6px;margin:-6px -6px 6px}
+  .room{font-weight:900}
+  .foot{font-size:12px;color:#666}
+  .row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+
+  /* Slide-in panel */
+  .panel-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.25);display:none}
+  .panel{position:fixed;top:0;right:-100%;width:min(860px,100%);height:100%;background:#fff;border-left:1px solid var(--border);box-shadow:-8px 0 24px rgba(0,0,0,.12);display:flex;flex-direction:column;transition:right .25s ease}
+  .panel.open + .panel-backdrop{display:block}
+  .panel.open{right:0}
+  .phd{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+  .pbd{padding:14px 16px;overflow:auto;flex:1}
+  .pft{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+  form{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  label{font-size:12px;color:#666}
+  input,select,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:#fff}
+  .full{grid-column:1/-1}
+  .note{font-size:12px;color:#b91c1c;margin-top:4px}
+  .suggest{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .pill{padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:#fafafa;cursor:pointer}
+  .pill:hover{background:#f0f0f0}
+  @media (max-width:720px){ form{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<header>
+  <h2>Front Desk Board (Simple)</h2>
+  <div class="sp"></div>
+  <div class="legend">
+    <span class="chip"><span class="sw" style="background:var(--green)"></span>In-House</span>
+    <span class="chip"><span class="sw" style="background:var(--yellow)"></span>Reserved</span>
+    <span class="chip"><span class="sw" style="background:var(--red)"></span>Dirty</span>
+    <span class="chip"><span class="sw" style="background:var(--gray)"></span>Vacant</span>
+  </div>
+</header>
+
+<div class="bar">
+  <input id="q" placeholder="Search room / guest / phone / car">
+  <button class="btn-outline" data-filter="all">All</button>
+  <button class="btn-outline" data-filter="green">In-House</button>
+  <button class="btn-outline" data-filter="yellow">Reserved</button>
+  <button class="btn-outline" data-filter="red">Dirty</button>
+  <button class="btn-outline" data-filter="gray">Vacant</button>
+  <div class="sp"></div>
+  <button id="newCustomerBtn" class="btn">New Customer</button>
+  <button id="addBtn" class="btn-outline">+ Add / Edit</button>
+  <button id="exportBtn" class="btn-outline">Export JSON</button>
+  <label class="btn-outline" style="display:inline-flex;align-items:center;gap:8px;cursor:pointer">
+    <input id="importFile" type="file" accept="application/json" style="display:none"> Import JSON
+  </label>
+  <button id="resetBtn" class="btn-outline">Reset</button>
+</div>
+
+<div class="wrap"><div class="grid" id="grid"></div></div>
+
+<!-- Slide-in panel -->
+<div id="panel" class="panel">
+  <div class="phd">
+    <strong>Room</strong>
+    <button id="closeBtn" class="btn-outline">Close</button>
+  </div>
+  <div class="pbd">
+    <form id="frm">
+      <div><label>Room</label><input name="roomNumber" required placeholder="101"></div>
+      <div><label>Status</label><select name="status">
+        <option value="gray">Vacant</option><option value="yellow">Reserved</option>
+        <option value="green">In-House</option><option value="red">Dirty</option>
+      </select></div>
+      <div>
+        <label>Persons</label>
+        <input type="number" min="1" value="1" name="persons">
+        <div id="capNote" class="note" style="display:none"></div>
+        <div id="suggest" class="suggest"></div>
+      </div>
+
+      <div><label>Guest</label><input name="guest" placeholder="Full name"></div>
+      <div><label>Nights</label><input type="number" min="0" value="0" name="nights"></div>
+      <div><label>Rate / night (IQD)</label><input type="number" min="0" step="1000" value="0" name="rate"></div>
+
+      <div><label>Amount paid (IQD)</label><input type="number" min="0" step="1000" value="0" name="amountPaid"></div>
+      <div><label>Paid (Arabic)</label><select name="paid"><option value="unpaid">غير مدفوع</option><option value="paid">مدفوع</option></select></div>
+      <div><label>Payment method</label><select name="method"><option>Cash</option><option>Card</option><option>Bank</option></select></div>
+
+      <div><label>Phone</label><input name="phone" placeholder="+964"></div>
+      <div><label>Car</label><input name="car" placeholder="plate"></div>
+      <div><label>Entry date</label><input name="entryDate" type="date"></div>
+
+      <div><label>Entry time</label><input name="entryTime" type="time"></div>
+      <div><label>Checked-in by (staff)</label><input name="checkedBy" placeholder="Front desk name"></div>
+      <div class="full"><label>Notes</label><textarea name="notes" rows="2"></textarea></div>
+
+      <div class="full" style="font-size:13px;color:#444">
+        <strong>Total: <span id="tot">0</span> IQD • Balance: <span id="bal">0</span> IQD</strong>
+      </div>
+    </form>
+  </div>
+  <div class="pft">
+    <button id="invoiceBtn" class="btn-outline">Invoice</button>
+    <button id="reserveBtn" class="btn-outline">Reserve</button>
+    <button id="checkinBtn" class="btn-outline">Check-In</button>
+    <button id="cleanBtn" class="btn-outline">Mark Clean</button>
+    <button id="dirtyBtn" class="btn-outline">Mark Dirty</button>
+    <button id="checkoutBtn" class="btn-outline">Check-Out → Dirty (wipe)</button>
+    <button id="saveBtn" class="btn">Save</button>
+  </div>
+</div>
+<div id="backdrop" class="panel-backdrop"></div>
+
+<script>
+/* 1) Always-visible room list */
+const ROOM_LIST = [
+  '101','102','103','104','105','106',
+  '201','202','203','204','205','206',
+  '301','302','303','304','305','306',
+  '401','402','403','404','405','406',
+  '501','502','503','504','505','506',
+  '601','602','604','605','606','607','608','609','610','611','612','613','614'
+];
+
+/* 2) Capacity + tiered pricing */
+const ROOM_PRICING = {
+  '101': {1:40000, 2:50000, 3:60000, 4:70000},
+  '102': {1:45000, 2:55000, 3:65000},
+};
+const FLOOR_DEFAULTS = {
+  '1': {1:40000, 2:50000, 3:60000, 4:70000},
+  '2': {1:42000, 2:52000, 3:62000, 4:72000},
+  '3': {1:43000, 2:53000, 3:63000, 4:73000},
+  '4': {1:44000, 2:54000, 3:64000, 4:74000},
+  '5': {1:45000, 2:55000, 3:65000, 4:75000},
+  '6': {1:46000, 2:56000, 3:66000, 4:76000},
+};
+function allowedPersonsFor(room){
+  const specific = ROOM_PRICING[room];
+  if (specific) return Object.keys(specific).map(n=>+n).sort((a,b)=>a-b);
+  const floor = String(room)[0];
+  const def = FLOOR_DEFAULTS[floor] || {};
+  return Object.keys(def).map(n=>+n).sort((a,b)=>a-b);
+}
+function priceFor(room, persons){
+  const specific = ROOM_PRICING[room];
+  if (specific && specific[persons]!=null) return specific[persons];
+  const floor = String(room)[0];
+  const def = FLOOR_DEFAULTS[floor] || {};
+  return def[persons] ?? 0;
+}
+
+/* 3) Storage */
+const KEY='subari_simple_v1';
+let rooms = JSON.parse(localStorage.getItem(KEY) || '[]');
+function save(){ localStorage.setItem(KEY, JSON.stringify(rooms)); }
+function money(n){ return Number(n||0).toLocaleString('en-IQ'); }
+function color(s){ return {green:'#22c55e',yellow:'#facc15',red:'#ef4444',gray:'#9ca3af'}[s] || '#ddd'; }
+
+function ensureAllRooms(){
+  const map=new Map(rooms.map(r=>[String(r.roomNumber), r]));
+  for(const n of ROOM_LIST){
+    if(!map.has(n)) map.set(n,{ id:'seed_'+n, roomNumber:n, status:'gray' });
+  }
+  rooms = Array.from(map.values()).sort((a,b)=>String(a.roomNumber).localeCompare(String(b.roomNumber)));
+  save();
+}
+
+/* 4) DOM */
+const grid=document.getElementById('grid');
+const q=document.getElementById('q');
+let filter='all', current=null;
+
+/* 5) Panel helpers */
+const panel = document.getElementById('panel');
+const backdrop = document.getElementById('backdrop');
+const frm=document.getElementById('frm');
+const capNote=document.getElementById('capNote');
+const suggestBox=document.getElementById('suggest');
+const totSpan=document.getElementById('tot');
+const balSpan=document.getElementById('bal');
+
+function openPanel(obj){
+  current = obj || {status:'gray', persons:1, nights:0, rate:0, amountPaid:0, paid:'unpaid', method:'Cash'};
+  if(!current.id){ current.id = Date.now(); rooms.push(current); }
+  for(const el of frm.elements){ if(el.name){ el.value = current[el.name] ?? ''; } }
+  updateCapacityUI(String(frm.elements['roomNumber'].value||'').trim(), +frm.elements['persons'].value||1);
+  calcTotals();
+  panel.classList.add('open');
+  backdrop.style.display='block';
+}
+function closePanel(){
+  panel.classList.remove('open');
+  backdrop.style.display='none';
+}
+document.getElementById('closeBtn').onclick = closePanel;
+backdrop.onclick = closePanel;
+
+/* 6) Top bar */
+document.querySelectorAll('[data-filter]').forEach(b=> b.onclick=()=>{ filter=b.dataset.filter; render(); });
+q.addEventListener('input', render);
+document.getElementById('addBtn').onclick = ()=>openPanel(null);
+
+/* NEW CUSTOMER FLOW */
+document.getElementById('newCustomerBtn').onclick = ()=>{
+  const val = prompt('How many persons? (e.g., 1, 2, 3, 4)');
+  if(!val) return;
+  const persons = Math.max(1, parseInt(val,10) || 1);
+  // Open clean panel
+  openPanel({status:'gray', persons, nights:0, rate:0, amountPaid:0, paid:'unpaid', method:'Cash'});
+  frm.elements['persons'].value = persons;
+  // Show ONLY vacant/clean suggestions with price
+  renderSuggestions(persons, /*onlyVacant*/ true);
+};
+
+/* 7) Form events & actions */
+frm.addEventListener('input', ()=>{
+  const f = Object.fromEntries(new FormData(frm).entries());
+  const room = String(f.roomNumber||'').trim();
+  const persons = +f.persons || 0;
+  updateCapacityUI(room, persons);
+  calcTotals();
+});
+
+document.getElementById('saveBtn').onclick = ()=>{
+  const f = Object.fromEntries(new FormData(frm).entries());
+  if(!f.roomNumber) return alert('Room number is required');
+  let r = rooms.find(x=> String(x.roomNumber)===String(f.roomNumber));
+  if(!r){ r={id:Date.now(), roomNumber:f.roomNumber}; rooms.push(r); }
+  Object.assign(r, f, { persons:+f.persons||0, nights:+f.nights||0, rate:+f.rate||0, amountPaid:+f.amountPaid||0 });
+  save(); render(); closePanel();
+};
+
+document.getElementById('reserveBtn').onclick = ()=>{ if(!current) return; current.status='yellow'; save(); render(); closePanel(); };
+document.getElementById('checkinBtn').onclick = ()=>{ if(!current) return; current.status='green'; save(); render(); closePanel(); };
+document.getElementById('cleanBtn').onclick   = ()=>{ if(!current) return; current.status='gray';  save(); render(); closePanel(); };
+document.getElementById('dirtyBtn').onclick   = ()=>{ if(!current) return; current.status='red';   save(); render(); closePanel(); };
+document.getElementById('checkoutBtn').onclick = ()=>{
+  if(!current) return;
+  if(!confirm('Check out this room? This clears guest details and marks the room as Dirty.')) return;
+  current.status='red';
+  current.guest=''; current.phone=''; current.car=''; current.notes='';
+  current.persons=0; current.nights=0; current.rate=0; current.amountPaid=0; current.paid='unpaid'; current.method='';
+  current.entryDate=''; current.entryTime=''; current.checkedBy='';
+  save(); render(); closePanel();
+};
+
+/* 8) Invoice */
+document.getElementById('invoiceBtn').onclick = ()=>{
+  const f = Object.fromEntries(new FormData(frm).entries());
+  const nights=+f.nights||0, rate=+f.rate||0, total=nights*rate, paid=+f.amountPaid||0, balance=Math.max(0,total-paid);
+  const html = `<html><head><meta charset="utf-8"><title>Invoice — Room ${f.roomNumber||''}</title>
+  <style>body{font-family:system-ui;padding:24px} h1{margin:0 0 8px} table{width:100%;border-collapse:collapse}
+  td,th{border:1px solid #ddd;padding:8px;text-align:left} .r{text-align:right}</style></head><body>
+  <h1>Invoice</h1>
+  <div><strong>Guest:</strong> ${f.guest||''}</div>
+  <div><strong>Room:</strong> ${f.roomNumber||''}</div>
+  <div><strong>Entry:</strong> ${f.entryDate||'-'} ${f.entryTime||''}</div><hr/>
+  <table><thead><tr><th>Description</th><th>Qty</th><th>Total</th></tr></thead>
+  <tbody><tr><td>${nights} night(s) @ ${money(rate)} IQD</td><td class='r'>${nights}</td><td class='r'>${money(total)}</td></tr></tbody></table>
+  <h3>Subtotal: ${money(total)} IQD</h3>
+  <div>Amount Paid: ${money(paid)} IQD</div>
+  <div>Balance: ${money(balance)} IQD</div>
+  </body></html>`;
+  const w=window.open('about:blank','_blank'); w.document.write(html); w.document.close();
+};
+
+/* 9) Capacity / suggestions / totals */
+function updateCapacityUI(room, persons){
+  const allowed = room ? allowedPersonsFor(room) : [];
+  const rate = (room && persons) ? priceFor(room, persons) : 0;
+  if (rate>0){ frm.elements['rate'].value = rate; }
+  if (room && persons && allowed.length && !allowed.includes(persons)){
+    capNote.style.display='block';
+    capNote.textContent = `Room ${room} allows persons: ${allowed.join(', ')}.`;
+  } else {
+    capNote.style.display='none';
+    capNote.textContent = '';
+  }
+  // default suggestions: show both vacant-first fallback
+  renderSuggestions(persons, /*onlyVacant*/ false);
+}
+
+function renderSuggestions(persons, onlyVacant){
+  suggestBox.innerHTML = '';
+  if (!(persons>0)) return;
+
+  let list = rooms;
+  if (onlyVacant){ list = list.filter(r => r.status==='gray'); }
+  const numbers = list
+    .filter(r => allowedPersonsFor(String(r.roomNumber)).includes(persons))
+    .map(r => String(r.roomNumber));
+
+  const toShow = numbers.length ? numbers
+    : ROOM_LIST.filter(num => allowedPersonsFor(num).includes(persons));
+
+  if (!toShow.length){
+    const warn = document.createElement('div');
+    warn.className='note';
+    warn.textContent = `No rooms available for ${persons} persons right now.`;
+    suggestBox.appendChild(warn);
+    return;
+  }
+
+  toShow.slice(0, 60).forEach(num=>{
+    const p = document.createElement('span');
+    p.className='pill';
+    const pr = priceFor(num, persons);
+    p.textContent = pr ? `${num} • ${money(pr)} IQD` : `${num} • N/A`;
+    p.onclick = ()=>{
+      frm.elements['roomNumber'].value = num;
+      frm.elements['persons'].value = persons;
+      if (pr>0) frm.elements['rate'].value = pr;
+      capNote.style.display='none';
+      calcTotals();
+    };
+    suggestBox.appendChild(p);
+  });
+}
+
+function calcTotals(){
+  const f = Object.fromEntries(new FormData(frm).entries());
+  const total = (+f.nights||0) * (+f.rate||0);
+  const balance = Math.max(0, total - (+f.amountPaid||0));
+  totSpan.textContent = money(total);
+  balSpan.textContent = money(balance);
+}
+
+/* 10) Export / Import / Reset */
+document.getElementById('exportBtn').onclick = ()=>{
+  const blob = new Blob([JSON.stringify(rooms,null,2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'subari-rooms.json'; a.click();
+};
+document.getElementById('importFile').addEventListener('change', async (e)=>{
+  try{
+    const file = e.target.files[0]; if(!file) return;
+    const txt = await file.text();
+    const arr = JSON.parse(txt);
+    if(!Array.isArray(arr)) throw new Error('Invalid JSON');
+    rooms = arr; save(); ensureAllRooms(); render(); alert('Imported successfully.');
+  }catch(err){ alert('Import failed: '+err.message); }
+});
+document.getElementById('resetBtn').onclick = ()=>{
+  if(confirm('Reset all rooms?')){ rooms=[]; save(); ensureAllRooms(); render(); }
+};
+
+/* 11) Board */
+function render(){
+  ensureAllRooms();
+  const term=(q.value||'').toLowerCase();
+  grid.innerHTML='';
+  rooms
+    .filter(r => filter==='all' ? true : r.status===filter)
+    .filter(r => (String(r.roomNumber)+' '+(r.guest||'')+' '+(r.phone||'')+' '+(r.car||'')).toLowerCase().includes(term))
+    .forEach(r=>{
+      const card=document.createElement('div'); card.className='card';
+      const stripe=document.createElement('div'); stripe.className='stripe'; stripe.style.background=color(r.status||'gray');
+      const room=document.createElement('div'); room.className='room'; room.textContent='Room '+(r.roomNumber||'');
+      const row=document.createElement('div'); row.className='row';
+      if(r.guest) row.innerHTML+=`<span>👤 ${r.guest}</span>`;
+      if(r.persons) row.innerHTML+=`<span>• 👥 ${r.persons}</span>`;
+      if(r.nights) row.innerHTML+=`<span>• 🛌 ${r.nights}</span>`;
+      if(r.rate) row.innerHTML+=`<span>• 💵 ${money(r.rate)}</span>`;
+      const total=(+r.nights||0)*(+r.rate||0);
+      const balance=Math.max(0,total-(+r.amountPaid||0));
+      const foot=document.createElement('div'); foot.className='foot';
+      const paidText=r.paid==='paid'?'مدفوع':'غير مدفوع';
+      foot.textContent=`${paidText} • Total ${money(total)} • Balance ${money(balance)}`;
+      const btns=document.createElement('div'); btns.className='row';
+      const open=document.createElement('button'); open.className='btn-outline'; open.textContent='Open'; open.onclick=()=>openPanel(r);
+      const clean=document.createElement('button'); clean.className='btn-outline'; clean.textContent='Mark Clean'; clean.onclick=()=>{ r.status='gray'; save(); render(); };
+      btns.append(open, clean);
+      card.append(stripe, room, row, foot, btns);
+      grid.append(card);
+    });
+}
+
+/* 12) Init */
+ensureAllRooms();
+render();
+</script>
+</body>
+</html>
